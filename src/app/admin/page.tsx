@@ -7,19 +7,39 @@ import {
   getStaticDepartments,
 } from "@/lib/data";
 import { getAllSelections } from "@/lib/selections";
+import { sql, ensureSchema } from "@/lib/db";
 import { CapacityEditor } from "./CapacityEditor";
 import { StudentEditor } from "./StudentEditor";
 import { AdminLogoutButton } from "./AdminLogoutButton";
+import { AddStudentForm } from "./AddStudentForm";
+import { SupportRequests } from "./SupportRequests";
+
+type SupportRow = {
+  id: number;
+  roll_no: string | null;
+  contact: string | null;
+  category: string | null;
+  message: string;
+  resolved: boolean;
+  created_at: string;
+};
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
-  const [students, departments, selections] = await Promise.all([
+  await ensureSchema();
+  const [students, departments, selections, supportRows] = await Promise.all([
     getStudentsWithOverrides(),
     getDepartmentsWithOverrides(),
     getAllSelections(),
+    sql<SupportRow[]>`
+      SELECT id, roll_no, contact, category, message, resolved, created_at::text AS created_at
+      FROM support_requests
+      ORDER BY resolved ASC, created_at DESC
+      LIMIT 200
+    `,
   ]);
 
   const submittedRolls = new Set(selections.map((s) => s.roll_no));
@@ -56,12 +76,40 @@ export default async function AdminPage() {
         <AdminLogoutButton />
       </header>
 
-      <div className="grid sm:grid-cols-4 gap-3">
+      <div className="grid sm:grid-cols-5 gap-3">
         <Stat label="Students" value={students.length.toString()} tone="slate" />
         <Stat label="Pass" value={passes.toString()} tone="emerald" />
         <Stat label="Fail" value={fails.toString()} tone="rose" />
         <Stat label="Submitted" value={`${submittedRolls.size}`} tone="teal" />
+        <Stat
+          label="Open tickets"
+          value={`${supportRows.filter((r) => !r.resolved).length}`}
+          tone="amber"
+        />
       </div>
+
+      {/* Excel export */}
+      <section className="flex flex-wrap items-center gap-3 p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-white to-teal-50/40">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-base font-semibold text-slate-900">
+            Download general spreadsheet
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Excel sheet with every passed candidate, their merit rank, and their four
+            rotation picks (or blank if not yet submitted). Generates fresh on click.
+          </p>
+        </div>
+        <a
+          href="/api/export.xlsx"
+          download
+          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 text-sm font-medium shadow-sm"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+          </svg>
+          Export .xlsx
+        </a>
+      </section>
 
       <section>
         <SectionHeader
@@ -95,10 +143,13 @@ export default async function AdminPage() {
       </section>
 
       <section>
-        <SectionHeader
-          title="Students"
-          subtitle="OCR-extracted from the result PDF. Edit any name, total marks, or pass/fail status; hide non-applicable rows; or reset a user's submitted selection."
-        />
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+          <SectionHeader
+            title="Students"
+            subtitle="OCR-extracted from the result PDF + manually added. Edit any field, skip a no-show student, or remove a manually-added row."
+          />
+          <AddStudentForm />
+        </div>
         <StudentEditor
           students={students}
           submittedRolls={Array.from(submittedRolls)}
@@ -109,6 +160,14 @@ export default async function AdminPage() {
             ]),
           )}
         />
+      </section>
+
+      <section>
+        <SectionHeader
+          title="Support requests"
+          subtitle="Messages submitted by students through the Contact Support form."
+        />
+        <SupportRequests rows={supportRows} />
       </section>
     </div>
   );
@@ -130,13 +189,14 @@ function Stat({
 }: {
   label: string;
   value: string;
-  tone: "slate" | "emerald" | "rose" | "teal";
+  tone: "slate" | "emerald" | "rose" | "teal" | "amber";
 }) {
   const cls = {
     slate: "bg-white ring-slate-200 text-slate-900",
     emerald: "bg-emerald-50 ring-emerald-100 text-emerald-900",
     rose: "bg-rose-50 ring-rose-100 text-rose-900",
     teal: "bg-teal-50 ring-teal-100 text-teal-900",
+    amber: "bg-amber-50 ring-amber-100 text-amber-900",
   }[tone];
   return (
     <div className={`rounded-xl ring-1 px-4 py-3 ${cls}`}>

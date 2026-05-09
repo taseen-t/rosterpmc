@@ -66,6 +66,37 @@ async function runSchema() {
         detail          JSONB,
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      -- Net-new student records added by admin (not in original OCR'd PDF).
+      -- These get re-ranked alongside OCR students by total marks.
+      CREATE TABLE IF NOT EXISTS student_additions (
+        roll_no         TEXT PRIMARY KEY,
+        name            TEXT NOT NULL,
+        total           INT,
+        medicine_marks  INT,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      -- Students an admin has marked "skipped" so they don't block lower
+      -- ranks (e.g. won't be joining, abroad, dropped out). Their rank slot
+      -- is essentially passed over for the rotation-locking gate.
+      CREATE TABLE IF NOT EXISTS skipped_students (
+        roll_no         TEXT PRIMARY KEY,
+        reason          TEXT,
+        skipped_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      -- User-submitted requests for corrections / help, viewable in admin.
+      CREATE TABLE IF NOT EXISTS support_requests (
+        id              SERIAL PRIMARY KEY,
+        roll_no         TEXT,
+        contact         TEXT,
+        category        TEXT,
+        message         TEXT NOT NULL,
+        resolved        BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_support_unresolved ON support_requests (created_at DESC) WHERE NOT resolved;
     `);
   } finally {
     await sql`SELECT pg_advisory_unlock(${LOCK_KEY})`;

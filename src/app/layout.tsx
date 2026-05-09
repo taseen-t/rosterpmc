@@ -102,6 +102,9 @@ export default async function RootLayout({
               <Link href="/" className="px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
                 Roster
               </Link>
+              <Link href="/contact" className="hidden md:inline-block px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
+                Support
+              </Link>
               {session ? (
                 <>
                   <Link href="/select" className="px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
@@ -131,8 +134,8 @@ export default async function RootLayout({
         <main className="flex-1">{children}</main>
 
         <footer className="mt-16 border-t border-slate-200 bg-white/70">
-          <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 grid sm:grid-cols-3 gap-6 text-sm">
-            <div>
+          <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 grid sm:grid-cols-4 gap-6 text-sm">
+            <div className="sm:col-span-2">
               <div className="flex items-center gap-2">
                 <span aria-hidden className="inline-flex h-7 w-7 rounded-lg bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center ring-1 ring-inset ring-white/15">
                   <svg viewBox="0 0 32 32" className="h-5 w-5 text-white" aria-hidden>
@@ -142,9 +145,14 @@ export default async function RootLayout({
                 </span>
                 <span className="font-semibold text-slate-900">Roster · PMC</span>
               </div>
-              <p className="mt-3 text-slate-600 leading-relaxed">
+              <p className="mt-3 text-slate-600 leading-relaxed max-w-md">
                 The official seat-selection system for FMU graduates joining as House
-                Officers at Allied Hospital, Faisalabad.
+                Officers at Allied Hospital, Faisalabad. Need a correction or can&apos;t
+                log in? Use{" "}
+                <Link href="/contact" className="text-teal-700 hover:underline">
+                  Contact Support
+                </Link>
+                .
               </p>
             </div>
             <div>
@@ -166,9 +174,14 @@ export default async function RootLayout({
             </div>
           </div>
           <div className="border-t border-slate-200/80">
-            <div className="mx-auto max-w-6xl px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <div className="mx-auto max-w-6xl px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
               <span>© {new Date().getFullYear()} · For internal use of Allied Hospital, Faisalabad.</span>
-              <span>Issues? Contact the MS Office.</span>
+              <p className="font-display text-[13px] text-slate-700">
+                Built by{" "}
+                <span className="text-slate-900 font-medium">Dr Rabiya Tariq</span>
+                <span aria-hidden className="neon-x">×</span>
+                <span className="text-slate-900 font-medium">Mohammad Taseen Tariq</span>
+              </p>
             </div>
           </div>
         </footer>

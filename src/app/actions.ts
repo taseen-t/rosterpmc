@@ -139,3 +139,123 @@ export async function adminClearCapacityOverride(name: string): Promise<{ error?
   revalidatePath("/admin");
   return {};
 }
+
+// ---------- Manual student additions ----------
+
+export async function adminAddStudent(input: {
+  roll_no: string;
+  name: string;
+  total: number | null;
+  medicine_marks: number | null;
+}): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+
+  const roll = input.roll_no.trim();
+  const name = input.name.trim();
+  if (!/^\d{4,8}$/.test(roll)) return { error: "Roll number must be 4-8 digits." };
+  if (name.length < 2) return { error: "Name is required." };
+  if (input.total != null && (input.total < 0 || input.total > 1500))
+    return { error: "Total marks must be between 0 and 1500." };
+  if (input.medicine_marks != null && (input.medicine_marks < 0 || input.medicine_marks > 500))
+    return { error: "Medicine marks must be between 0 and 500." };
+
+  // Reject if this roll already exists (in OCR data)
+  if (getStaticStudentByRoll(roll)) {
+    return { error: "That roll number is already in the OCR-imported list. Edit it via the table instead." };
+  }
+
+  try {
+    await sql`
+      INSERT INTO student_additions (roll_no, name, total, medicine_marks)
+      VALUES (${roll}, ${name}, ${input.total}, ${input.medicine_marks})
+    `;
+    await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"add-student"}, ${sql.json(input)})`;
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return {};
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("duplicate") || msg.includes("unique"))
+      return { error: "That roll number is already added." };
+    return { error: "Failed to add student." };
+  }
+}
+
+export async function adminRemoveAddedStudent(roll: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+  await sql`DELETE FROM student_additions WHERE roll_no = ${roll}`;
+  await sql`DELETE FROM selections WHERE roll_no = ${roll}`;
+  await sql`DELETE FROM submissions WHERE roll_no = ${roll}`;
+  await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"remove-added-student"}, ${sql.json({ roll })})`;
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {};
+}
+
+// ---------- Skip / unskip ----------
+
+export async function adminSkipStudent(roll: string, reason: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+  await sql`
+    INSERT INTO skipped_students (roll_no, reason) VALUES (${roll}, ${reason || null})
+    ON CONFLICT (roll_no) DO UPDATE SET reason = ${reason || null}
+  `;
+  await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"skip"}, ${sql.json({ roll, reason })})`;
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function adminUnskipStudent(roll: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+  await sql`DELETE FROM skipped_students WHERE roll_no = ${roll}`;
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {};
+}
+
+// ---------- Support requests ----------
+
+export async function submitSupportRequest(input: {
+  roll_no?: string;
+  contact?: string;
+  category?: string;
+  message: string;
+}): Promise<{ error?: string }> {
+  await ensureSchema();
+  const message = input.message?.trim() ?? "";
+  if (message.length < 5) return { error: "Please describe your issue (5 chars min)." };
+  if (message.length > 2000) return { error: "Message too long (max 2000 chars)." };
+
+  await sql`
+    INSERT INTO support_requests (roll_no, contact, category, message)
+    VALUES (
+      ${input.roll_no?.trim() || null},
+      ${input.contact?.trim() || null},
+      ${input.category || null},
+      ${message}
+    )
+  `;
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function adminResolveSupport(id: number, resolved: boolean): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+  await sql`UPDATE support_requests SET resolved = ${resolved} WHERE id = ${id}`;
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function adminDeleteSupport(id: number): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+  await sql`DELETE FROM support_requests WHERE id = ${id}`;
+  revalidatePath("/admin");
+  return {};
+}

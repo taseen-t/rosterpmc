@@ -1,5 +1,36 @@
 import { sql, ensureSchema } from "./db";
-import { getDepartmentsWithOverrides, getStudentsWithOverrides } from "./data";
+import {
+  getDepartmentsWithOverrides,
+  getStudentsWithOverrides,
+  type Student,
+} from "./data";
+
+/**
+ * Returns the highest-priority student (lowest rank number) who hasn't
+ * submitted yet AND isn't admin-skipped, IF that student outranks `roll`.
+ * Returns null when `roll` may proceed.
+ */
+export async function getRankBlocker(roll: string): Promise<Student | null> {
+  await ensureSchema();
+  const students = await getStudentsWithOverrides();
+  const me = students.find((s) => s.roll_no === roll);
+  if (!me || me.rank == null) return null;
+
+  const submitted = await sql<{ roll_no: string }[]>`SELECT roll_no FROM submissions`;
+  const submittedSet = new Set(submitted.map((s) => s.roll_no));
+
+  const passes = students
+    .filter((s) => s.overall === "Pass" && s.rank != null)
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+
+  for (const s of passes) {
+    if ((s.rank ?? 0) >= (me.rank ?? 0)) return null;
+    if (s.skipped) continue;
+    if (submittedSet.has(s.roll_no)) continue;
+    return s;
+  }
+  return null;
+}
 
 export type SelectionRow = {
   roll_no: string;
@@ -96,6 +127,17 @@ export async function submitSelections(args: SubmitArgs): Promise<{ ok: true } |
   const me = students.find((s) => s.roll_no === roll);
   if (!me) return { ok: false, error: "Roll number not recognized." };
   if (me.overall !== "Pass") return { ok: false, error: "Only candidates who passed are eligible." };
+  if (me.rank == null) return { ok: false, error: "Your rank is not set. Contact the MS Office." };
+
+  // Rank-based locking: a lower-ranked student cannot submit until every
+  // higher-ranked student has either submitted or been skipped by admin.
+  const blocker = await getRankBlocker(roll);
+  if (blocker) {
+    return {
+      ok: false,
+      error: `Please wait — Rank #${blocker.rank} (${blocker.name}) hasn't selected their rotations yet. Higher merit picks first.`,
+    };
+  }
 
   const validDepts = new Set((await getDepartmentsWithOverrides()).map((d) => d.name));
   for (const p of picks) {

@@ -2,8 +2,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getStudentSession } from "@/lib/auth";
 import { getStudentsWithOverrides } from "@/lib/data";
-import { getSeatMatrix, getSelectionsByRoll, isSubmitted } from "@/lib/selections";
+import {
+  getRankBlocker,
+  getSeatMatrix,
+  getSelectionsByRoll,
+  isSubmitted,
+} from "@/lib/selections";
 import { SelectForm } from "./SelectForm";
+import { RefreshOnInterval } from "@/components/RefreshOnInterval";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +24,12 @@ export default async function SelectPage() {
   const session = await getStudentSession();
   if (!session) redirect("/login");
 
-  const [students, matrix, mySelections, submitted] = await Promise.all([
+  const [students, matrix, mySelections, submitted, blocker] = await Promise.all([
     getStudentsWithOverrides(),
     getSeatMatrix(),
     getSelectionsByRoll(session.roll),
     isSubmitted(session.roll),
+    getRankBlocker(session.roll),
   ]);
 
   const me = students.find((s) => s.roll_no === session.roll);
@@ -68,6 +75,8 @@ export default async function SelectPage() {
 
       {submitted ? (
         <SubmittedView selections={mySelections} />
+      ) : blocker ? (
+        <BlockerView blocker={blocker} />
       ) : (
         <SelectForm
           rotations={ROTATIONS}
@@ -75,6 +84,57 @@ export default async function SelectPage() {
           existing={mySelections}
         />
       )}
+    </div>
+  );
+}
+
+function BlockerView({
+  blocker,
+}: {
+  blocker: { rank: number | null; name: string; roll_no: string };
+}) {
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 to-white shadow-sm p-6 md:p-8">
+      <div className="flex items-start gap-4">
+        <span aria-hidden className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 ring-1 ring-amber-200">
+          <svg viewBox="0 0 24 24" className="h-6 w-6 text-amber-700" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+        </span>
+        <div className="flex-1">
+          <h2 className="font-display text-2xl font-semibold text-amber-900 tracking-tight">
+            Please wait — higher rank picks first
+          </h2>
+          <p className="mt-2 text-sm text-amber-900/80 leading-relaxed">
+            Selection is locked until candidates ranked above you submit. Rank{" "}
+            <span className="font-semibold">#{blocker.rank}</span>{" "}
+            <span className="font-semibold">{blocker.name}</span>{" "}
+            <span className="text-amber-900/60">(Roll {blocker.roll_no})</span>{" "}
+            hasn&apos;t selected their rotations yet.
+          </p>
+          <p className="mt-3 text-sm text-amber-900/80 leading-relaxed">
+            This page will refresh automatically — keep it open. Once they submit, this
+            block lifts and you can pick your rotations.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 text-sm font-medium"
+            >
+              View public roster
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-white hover:bg-amber-50 text-amber-900 px-4 py-2 text-sm"
+            >
+              Contact MS Office
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <RefreshOnInterval />
     </div>
   );
 }

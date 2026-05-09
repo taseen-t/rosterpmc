@@ -6,6 +6,9 @@ import {
   adminUpdateStudent,
   adminClearStudentOverride,
   adminResetStudent,
+  adminSkipStudent,
+  adminUnskipStudent,
+  adminRemoveAddedStudent,
 } from "@/app/actions";
 import type { Student } from "@/lib/data";
 
@@ -24,9 +27,9 @@ export function StudentEditor({
   staticStudentMap: StaticMap;
 }) {
   const [filter, setFilter] = useState("");
-  const [tab, setTab] = useState<"all" | "pass" | "fail" | "submitted" | "issues">(
-    "all",
-  );
+  const [tab, setTab] = useState<
+    "all" | "pass" | "fail" | "submitted" | "issues" | "skipped" | "added"
+  >("all");
   const submitted = useMemo(() => new Set(submittedRolls), [submittedRolls]);
 
   const filtered = useMemo(() => {
@@ -35,8 +38,11 @@ export function StudentEditor({
       if (tab === "pass" && s.overall !== "Pass") return false;
       if (tab === "fail" && s.overall !== "Fail") return false;
       if (tab === "submitted" && !submitted.has(s.roll_no)) return false;
+      if (tab === "skipped" && !s.skipped) return false;
+      if (tab === "added" && !s.manual) return false;
       if (tab === "issues") {
-        const incomplete = s.subjects.length < 4 || s.total == null;
+        const incomplete =
+          !s.manual && (s.subjects.length < 4 || s.total == null);
         if (!incomplete) return false;
       }
       if (!f) return true;
@@ -61,12 +67,22 @@ export function StudentEditor({
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-center gap-2 p-3 border-b border-slate-200">
         <div className="flex flex-wrap gap-1">
-          {(["all", "pass", "fail", "submitted", "issues"] as const).map((t) => (
+          {(
+            [
+              "all",
+              "pass",
+              "fail",
+              "submitted",
+              "skipped",
+              "added",
+              "issues",
+            ] as const
+          ).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`px-3 py-1.5 rounded-md text-xs ring-1 ${
+              className={`px-3 py-1.5 rounded-md text-xs ring-1 transition-colors ${
                 tab === t
                   ? "bg-teal-600 text-white ring-teal-600"
                   : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50"
@@ -80,7 +96,11 @@ export function StudentEditor({
                     ? "Fail"
                     : t === "submitted"
                       ? "Submitted"
-                      : "Needs review"}
+                      : t === "skipped"
+                        ? "Skipped"
+                        : t === "added"
+                          ? "Manually added"
+                          : "Needs review"}
             </button>
           ))}
         </div>
@@ -155,7 +175,7 @@ function StudentRow({
       original.overall !== student.overall ||
       original.rank !== student.rank);
 
-  const incomplete = student.subjects.length < 4 || student.total == null;
+  const incomplete = !student.manual && (student.subjects.length < 4 || student.total == null);
 
   function save() {
     start(async () => {
@@ -188,6 +208,37 @@ function StudentRow({
     });
   }
 
+  function toggleSkip() {
+    if (student.skipped) {
+      start(async () => {
+        await adminUnskipStudent(student.roll_no);
+        router.refresh();
+      });
+      return;
+    }
+    const reason = prompt(
+      `Mark ${student.name} (Roll ${student.roll_no}) as skipped?\n\nThis lets students ranked below them proceed even if this person never submits.\n\nReason (optional):`,
+    );
+    if (reason === null) return;
+    start(async () => {
+      await adminSkipStudent(student.roll_no, reason);
+      router.refresh();
+    });
+  }
+
+  function removeManual() {
+    if (
+      !confirm(
+        `Remove ${student.name} (Roll ${student.roll_no}) entirely?\n\nThis only works for manually-added students. Their submitted picks (if any) will also be deleted.`,
+      )
+    )
+      return;
+    start(async () => {
+      await adminRemoveAddedStudent(student.roll_no);
+      router.refresh();
+    });
+  }
+
   return (
     <tr className={incomplete ? "bg-amber-50/40" : "hover:bg-slate-50/60"}>
       <td className="px-3 py-2.5 font-mono text-slate-500">
@@ -214,6 +265,16 @@ function StudentRow({
         ) : (
           <div>
             <span className="text-slate-900">{student.name}</span>
+            {student.manual && (
+              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-teal-100 text-teal-800 ring-1 ring-teal-200">
+                manual
+              </span>
+            )}
+            {student.skipped && (
+              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700 ring-1 ring-slate-300">
+                skipped
+              </span>
+            )}
             {overridden && (
               <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 ring-1 ring-amber-200">
                 edited
@@ -304,6 +365,35 @@ function StudentRow({
             >
               Edit
             </button>
+            {student.overall === "Pass" && !submitted && (
+              <button
+                type="button"
+                onClick={toggleSkip}
+                disabled={pending}
+                className={`px-2 py-1 rounded-md text-xs disabled:opacity-50 ${
+                  student.skipped
+                    ? "text-teal-700 hover:bg-teal-50"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+                title={
+                  student.skipped
+                    ? "Reinstate this student into the rank queue"
+                    : "Skip — let lower ranks proceed"
+                }
+              >
+                {student.skipped ? "Unskip" : "Skip"}
+              </button>
+            )}
+            {student.manual && (
+              <button
+                type="button"
+                onClick={removeManual}
+                disabled={pending}
+                className="px-2 py-1 rounded-md text-rose-600 hover:bg-rose-50 text-xs disabled:opacity-50"
+              >
+                Remove
+              </button>
+            )}
             {overridden && (
               <button
                 type="button"
