@@ -10,6 +10,7 @@ import {
 } from "@/lib/selections";
 import { SelectForm } from "./SelectForm";
 import { RefreshOnInterval } from "@/components/RefreshOnInterval";
+import { logAccess } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,12 @@ export default async function SelectPage() {
 
   const me = students.find((s) => s.roll_no === session.roll);
   if (!me) redirect("/login");
+
+  await logAccess({
+    roll_no: session.roll,
+    actor: session.roll,
+    action: blocker ? "view_select_blocked" : "view_select",
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 md:px-6 py-8 md:py-10 space-y-8">

@@ -1,10 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f4ee;
-  --cream: #f6f4ee;
-  --foreground: #0c1727;
+  /* Surface — light, calm, very Modula */
+  --background: #f7f8f8;       /* white-smoke-3 */
+  --cream: #fafaf9;             /* ghost-white */
+  --paper: #ffffff;
+  --hairline: #eef1f1;          /* white-smoke */
 
+  /* Ink */
+  --ink-900: #1f2223;           /* dark-gray (primary text) */
+  --ink-700: #3c4853;           /* dark-slate-gray */
+  --ink-600: #415762;           /* dark-slate-gray-1 */
+  --ink-400: #b3bdbd;           /* silver */
+  --foreground: var(--ink-900);
+
+  /* Lime accent (the Modula pop) */
+  --lime-100: #f4ffd2;
+  --lime-200: #eaff9f;
+  --lime-300: #e3ff8f;
+  --lime-500: #c4e858;
+  --lime-700: #80a32e;
+
+  /* Medical teal — dialed back from the previous theme so it reads as a
+     secondary accent rather than the dominant brand color. */
   --teal-50: #effcfa;
   --teal-100: #cef7f1;
   --teal-200: #9aeee0;
@@ -14,23 +32,21 @@
   --teal-700: #0c6b5f;
   --teal-800: #0a4e44;
 
-  --navy-700: #0f3d6e;
-  --navy-800: #0b2e54;
-  --navy-900: #082040;
-
+  /* Status & utility */
+  --tomato: #ee4444;
   --emerald-50: #ecfdf5;
   --emerald-100: #d1fae5;
   --emerald-700: #047857;
-
   --amber-50: #fffbeb;
   --amber-100: #fef3c7;
+  --amber-200: #fde68a;
   --amber-700: #b45309;
-
   --rose-50: #fff1f2;
   --rose-100: #ffe4e6;
   --rose-700: #be123c;
 
-  --slate-50: #f8fafc;
+  /* Carryover slate (used in some components) */
+  --slate-50: #fafafa;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
   --slate-300: #cbd5e1;
@@ -39,12 +55,29 @@
   --slate-700: #334155;
   --slate-800: #1e293b;
   --slate-900: #0f172a;
+
+  --navy-700: #0f3d6e;
+  --navy-800: #0b2e54;
+  --navy-900: #082040;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-hairline: var(--hairline);
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-400: var(--ink-400);
   --color-foreground: var(--foreground);
+
+  --color-lime-100: var(--lime-100);
+  --color-lime-200: var(--lime-200);
+  --color-lime-300: var(--lime-300);
+  --color-lime-500: var(--lime-500);
+  --color-lime-700: var(--lime-700);
+
   --color-teal-50: var(--teal-50);
   --color-teal-100: var(--teal-100);
   --color-teal-200: var(--teal-200);
@@ -53,18 +86,19 @@
   --color-teal-600: var(--teal-600);
   --color-teal-700: var(--teal-700);
   --color-teal-800: var(--teal-800);
-  --color-navy-700: var(--navy-700);
-  --color-navy-800: var(--navy-800);
-  --color-navy-900: var(--navy-900);
+
+  --color-tomato: var(--tomato);
   --color-emerald-50: var(--emerald-50);
   --color-emerald-100: var(--emerald-100);
   --color-emerald-700: var(--emerald-700);
   --color-amber-50: var(--amber-50);
   --color-amber-100: var(--amber-100);
+  --color-amber-200: var(--amber-200);
   --color-amber-700: var(--amber-700);
   --color-rose-50: var(--rose-50);
   --color-rose-100: var(--rose-100);
   --color-rose-700: var(--rose-700);
+
   --color-slate-50: var(--slate-50);
   --color-slate-100: var(--slate-100);
   --color-slate-200: var(--slate-200);
@@ -74,29 +108,68 @@
   --color-slate-700: var(--slate-700);
   --color-slate-800: var(--slate-800);
   --color-slate-900: var(--slate-900);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-navy-700: var(--navy-700);
+  --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+
+  --font-sans: var(--font-onest);
+  --font-mono: var(--font-mono);
   --font-display: var(--font-display);
+  --font-serif: var(--font-serif);
 }
 
 body {
-  background:
-    radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.06), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(11, 46, 84, 0.05), transparent 40%),
-    var(--cream);
-  background-attachment: fixed;
+  background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
 }
 
-.font-display {
-  font-family: var(--font-display), ui-serif, Georgia, serif;
-  font-feature-settings: "ss01";
+/* Modula-inspired typography — registered as Tailwind v4 utilities so
+   they survive the build's tree-shaking. */
+@utility font-display { font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif; }
+@utility font-serif   { font-family: var(--font-serif), ui-serif, Georgia, serif; }
+@utility font-onest   { font-family: var(--font-onest), ui-sans-serif, system-ui, sans-serif; }
+@utility font-mono    { font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+@utility h1-display {
+  font-size: clamp(40px, 6vw, 70px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.030em;
+}
+@utility h1-large {
+  font-size: clamp(34px, 4.6vw, 48px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.020em;
+}
+@utility h2-title {
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.10;
+  letter-spacing: -0.020em;
+}
+@utility h3-subtitle {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.30;
+  letter-spacing: -0.010em;
+}
+@utility label-overline {
+  font-family: var(--font-onest);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--ink-600);
 }
 
 *:focus-visible {
-  outline: 2px solid var(--teal-500);
+  outline: 2px solid var(--lime-500);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -104,24 +177,19 @@ body {
 .scrollx {
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--slate-200) transparent;
+  scrollbar-color: var(--hairline) transparent;
 }
-.scrollx::-webkit-scrollbar {
-  height: 8px;
-}
-.scrollx::-webkit-scrollbar-thumb {
-  background: var(--slate-200);
-  border-radius: 4px;
-}
+.scrollx::-webkit-scrollbar { height: 8px; }
+.scrollx::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 4px; }
 
-/* Hospital cross pattern background */
+/* Subtle dot pattern used on the dark hero */
 .bg-rx {
   background-image:
     radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
-/* Live pulse */
+/* Animated lime "live" dot */
 @keyframes pulse-soft {
   0%, 100% { transform: scale(1); opacity: 0.6; }
   50% { transform: scale(1.4); opacity: 0; }
@@ -135,26 +203,25 @@ body {
   animation: pulse-soft 2s ease-out infinite;
 }
 
-/* Subtle hairline divider */
 .hr-fade {
-  background: linear-gradient(to right, transparent, var(--slate-200), transparent);
+  background: linear-gradient(to right, transparent, var(--hairline), transparent);
 }
 
-/* Neon × glyph for the footer credit */
+/* Neon × glyph for the footer credit, switched to lime */
 @keyframes neon-flicker {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.85)) drop-shadow(0 0 14px rgba(94, 234, 212, 0.55)); }
-  50%      { opacity: 0.92; filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.65)) drop-shadow(0 0 10px rgba(94, 234, 212, 0.4)); }
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(196, 232, 88, 0.85)); }
+  50%      { opacity: 0.92; filter: drop-shadow(0 0 4px rgba(196, 232, 88, 0.65)); }
 }
 .neon-x {
   display: inline-block;
   margin: 0 0.4em;
-  color: #5eead4;
+  color: var(--lime-300);
   font-weight: 700;
   text-shadow:
-    0 0 4px rgba(94, 234, 212, 0.95),
-    0 0 10px rgba(45, 212, 191, 0.85),
-    0 0 20px rgba(20, 184, 166, 0.55),
-    0 0 36px rgba(20, 184, 166, 0.35);
+    0 0 4px rgba(227, 255, 143, 0.95),
+    0 0 10px rgba(196, 232, 88, 0.85),
+    0 0 20px rgba(128, 163, 46, 0.55),
+    0 0 36px rgba(128, 163, 46, 0.35);
   animation: neon-flicker 2.6s ease-in-out infinite;
   font-family: var(--font-display), ui-serif, Georgia, serif;
   font-style: italic;

@@ -11,6 +11,7 @@ import {
   adminRemoveAddedStudent,
 } from "@/app/actions";
 import type { Student } from "@/lib/data";
+import { AccessLogDialog } from "./AccessLogDialog";
 
 type StaticMap = Record<
   string,
@@ -161,6 +162,7 @@ function StudentRow({
   original?: { name: string; total: number | null; overall: "Pass" | "Fail"; rank: number | null };
 }) {
   const [editing, setEditing] = useState(false);
+  const [showAccess, setShowAccess] = useState(false);
   const [name, setName] = useState(student.name);
   const [total, setTotal] = useState<string>(student.total?.toString() ?? "");
   const [overall, setOverall] = useState<"Pass" | "Fail">(student.overall);
@@ -240,6 +242,7 @@ function StudentRow({
   }
 
   return (
+    <>
     <tr className={incomplete ? "bg-amber-50/40" : "hover:bg-slate-50/60"}>
       <td className="px-3 py-2.5 font-mono text-slate-500">
         {editing ? (
@@ -365,6 +368,14 @@ function StudentRow({
             >
               Edit
             </button>
+            <button
+              type="button"
+              onClick={() => setShowAccess(true)}
+              className="px-2 py-1 rounded-md text-slate-600 hover:bg-slate-100 text-xs"
+              title="View access trail"
+            >
+              Access
+            </button>
             {student.overall === "Pass" && !submitted && (
               <button
                 type="button"
@@ -418,5 +429,13 @@ function StudentRow({
         )}
       </td>
     </tr>
+    {showAccess && (
+      <AccessLogDialog
+        roll={student.roll_no}
+        name={student.name}
+        onClose={() => setShowAccess(false)}
+      />
+    )}
+    </>
   );
 }

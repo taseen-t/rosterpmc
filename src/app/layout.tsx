@@ -1,25 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Onest, Karma, IBM_Plex_Mono, Bree_Serif } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { getStudentSession, isAdmin } from "@/lib/auth";
 import { LogoutButton } from "@/components/LogoutButton";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-display",
+const onest = Onest({
+  variable: "--font-onest",
   subsets: ["latin"],
   display: "swap",
-  axes: ["SOFT", "WONK"],
+});
+
+const karma = Karma({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const breeSerif = Bree_Serif({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+});
+
+const ibmMono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 const SITE_NAME = "Allied Hospital House Job Portal";
@@ -77,53 +87,53 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${onest.variable} ${ibmMono.variable} ${karma.variable} ${breeSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-cream">
-        <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-white/75 bg-white border-b border-slate-200/80">
+      <body className="min-h-full flex flex-col bg-background text-ink-900">
+        <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-paper/80 bg-paper border-b border-hairline">
           <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <span aria-hidden className="relative inline-flex h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-[0_2px_10px_-2px_rgba(11,62,79,0.45)] ring-1 ring-inset ring-white/20">
-                <svg viewBox="0 0 32 32" className="h-7 w-7 text-white" aria-hidden>
+              <span aria-hidden className="relative inline-flex h-10 w-10 rounded-xl bg-ink-900 grid place-items-center ring-1 ring-inset ring-white/10">
+                <svg viewBox="0 0 32 32" className="h-7 w-7 text-lime-300" aria-hidden>
                   <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.4" strokeDasharray="2 2.4" strokeLinecap="round"/>
                   <path d="M16 10v12 M10 16h12" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/>
                 </svg>
               </span>
               <div className="leading-tight">
-                <div className="text-sm md:text-[15px] font-semibold text-slate-900 group-hover:text-teal-700 transition-colors tracking-tight">
-                  Roster · House Job Portal
+                <div className="text-[15px] font-medium text-ink-900 tracking-tight">
+                  Roster
                 </div>
-                <div className="text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-slate-500">
+                <div className="label-overline mt-0.5 !text-ink-400 !text-[10px]">
                   Allied Hospital · Faisalabad
                 </div>
               </div>
             </Link>
             <nav className="flex items-center gap-1 text-sm">
-              <Link href="/" className="px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
+              <Link href="/" className="px-3 py-1.5 rounded-lg text-ink-700 hover:bg-hairline transition-colors">
                 Roster
               </Link>
-              <Link href="/contact" className="hidden md:inline-block px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
+              <Link href="/contact" className="hidden md:inline-block px-3 py-1.5 rounded-lg text-ink-700 hover:bg-hairline transition-colors">
                 Support
               </Link>
               {session ? (
                 <>
-                  <Link href="/select" className="px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
+                  <Link href="/select" className="px-3 py-1.5 rounded-lg text-ink-700 hover:bg-hairline transition-colors">
                     My Selection
                   </Link>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 text-[11px] font-mono text-slate-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-hairline text-[11px] font-mono text-ink-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-lime-500" />
                     {session.roll}
                   </span>
                   <LogoutButton />
                 </>
               ) : (
-                <Link href="/login" className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium transition-colors shadow-sm">
+                <Link href="/login" className="px-3.5 py-1.5 rounded-lg bg-ink-900 hover:bg-ink-700 text-paper font-medium transition-colors">
                   Login
                 </Link>
               )}
               <Link
                 href={admin ? "/admin" : "/admin/login"}
-                className="hidden sm:inline-block px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 text-[11px] uppercase tracking-wider transition-colors"
+                className="hidden sm:inline-block px-3 py-1.5 rounded-lg text-ink-400 hover:bg-hairline text-[11px] uppercase tracking-[0.12em] transition-colors"
               >
                 {admin ? "Admin" : "Admin"}
               </Link>
@@ -133,54 +143,54 @@ export default async function RootLayout({
 
         <main className="flex-1">{children}</main>
 
-        <footer className="mt-16 border-t border-slate-200 bg-white/70">
-          <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 grid sm:grid-cols-4 gap-6 text-sm">
+        <footer className="mt-20 border-t border-hairline bg-paper">
+          <div className="mx-auto max-w-6xl px-4 md:px-6 py-10 grid sm:grid-cols-4 gap-8">
             <div className="sm:col-span-2">
               <div className="flex items-center gap-2">
-                <span aria-hidden className="inline-flex h-7 w-7 rounded-lg bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center ring-1 ring-inset ring-white/15">
-                  <svg viewBox="0 0 32 32" className="h-5 w-5 text-white" aria-hidden>
+                <span aria-hidden className="inline-flex h-7 w-7 rounded-lg bg-ink-900 grid place-items-center">
+                  <svg viewBox="0 0 32 32" className="h-5 w-5 text-lime-300" aria-hidden>
                     <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.4" strokeDasharray="2 2.4" strokeLinecap="round"/>
                     <path d="M16 10v12 M10 16h12" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/>
                   </svg>
                 </span>
-                <span className="font-semibold text-slate-900">Roster · PMC</span>
+                <span className="font-medium text-ink-900">Roster · PMC</span>
               </div>
-              <p className="mt-3 text-slate-600 leading-relaxed max-w-md">
+              <p className="mt-4 text-[15px] text-ink-700 leading-[1.55] max-w-md">
                 The official seat-selection system for FMU graduates joining as House
                 Officers at Allied Hospital, Faisalabad. Need a correction or can&apos;t
                 log in? Use{" "}
-                <Link href="/contact" className="text-teal-700 hover:underline">
+                <Link href="/contact" className="underline decoration-lime-500 underline-offset-4 decoration-2 hover:decoration-ink-900 text-ink-900">
                   Contact Support
                 </Link>
                 .
               </p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Office</p>
-              <p className="mt-2 text-slate-700 leading-relaxed">
+              <p className="label-overline">Office</p>
+              <p className="mt-2 text-[15px] text-ink-700 leading-[1.55]">
                 Office of the Medical Superintendent
                 <br />
                 Allied Hospital, Faisalabad
               </p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Session</p>
-              <p className="mt-2 text-slate-700 font-mono">
+              <p className="label-overline">Session</p>
+              <p className="mt-2 text-[15px] font-mono text-ink-700">
                 01 Jun 2026 → 31 May 2027
               </p>
-              <p className="text-slate-500 text-xs mt-1">
-                4 rotations of 3 months each.
+              <p className="text-ink-400 text-[13px] mt-1">
+                4 rotations · 3 months each
               </p>
             </div>
           </div>
-          <div className="border-t border-slate-200/80">
-            <div className="mx-auto max-w-6xl px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-              <span>© {new Date().getFullYear()} · For internal use of Allied Hospital, Faisalabad.</span>
-              <p className="font-display text-[13px] text-slate-700">
+          <div className="border-t border-hairline">
+            <div className="mx-auto max-w-6xl px-4 md:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-400">
+              <span>© {new Date().getFullYear()} · Internal use only.</span>
+              <p className="font-display text-[14px] text-ink-700">
                 Built by{" "}
-                <span className="text-slate-900 font-medium">Dr Rabiya Tariq</span>
+                <span className="text-ink-900 font-medium">Dr Rabiya Tariq</span>
                 <span aria-hidden className="neon-x">×</span>
-                <span className="text-slate-900 font-medium">Mohammad Taseen Tariq</span>
+                <span className="text-ink-900 font-medium">Mohammad Taseen Tariq</span>
               </p>
             </div>
           </div>

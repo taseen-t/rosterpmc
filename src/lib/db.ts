@@ -97,6 +97,22 @@ async function runSchema() {
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_support_unresolved ON support_requests (created_at DESC) WHERE NOT resolved;
+
+      -- Audit trail of every access attempt against a roll number — login
+      -- successes/failures and select-page views. Lets the admin see who
+      -- tried to log in as whom, from where, and when.
+      CREATE TABLE IF NOT EXISTS access_log (
+        id              SERIAL PRIMARY KEY,
+        roll_no         TEXT NOT NULL,
+        actor           TEXT,
+        action          TEXT NOT NULL,
+        ip              TEXT,
+        country         TEXT,
+        city            TEXT,
+        user_agent      TEXT,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_access_log_roll ON access_log (roll_no, created_at DESC);
     `);
   } finally {
     await sql`SELECT pg_advisory_unlock(${LOCK_KEY})`;

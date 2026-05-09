@@ -14,19 +14,26 @@ import {
 import { getStaticStudentByRoll, getStudentsWithOverrides } from "@/lib/data";
 import { submitSelections } from "@/lib/selections";
 import { sql, ensureSchema } from "@/lib/db";
+import { logAccess } from "@/lib/access";
 
 export async function loginStudent(formData: FormData): Promise<{ error?: string }> {
   const roll = String(formData.get("roll") || "").trim();
-  if (!/^\d{6}$/.test(roll))
-    return { error: "Enter a valid 6-digit roll number." };
+  if (!/^\d{4,8}$/.test(roll))
+    return { error: "Enter a valid roll number." };
   const students = await getStudentsWithOverrides();
   const me = students.find((s) => s.roll_no === roll);
-  if (!me) return { error: "Roll number not found in this year's batch." };
-  if (me.overall !== "Pass")
+  if (!me) {
+    await logAccess({ roll_no: roll, action: "login_fail_unknown" });
+    return { error: "Roll number not found in this year's batch." };
+  }
+  if (me.overall !== "Pass") {
+    await logAccess({ roll_no: roll, actor: roll, action: "login_fail_not_pass" });
     return {
       error:
         "Sorry — only candidates marked as Passed in the Final Professional MBBS result can log in.",
     };
+  }
+  await logAccess({ roll_no: roll, actor: roll, action: "login_success" });
   await setStudentSession(roll);
   redirect("/select");
 }
@@ -53,6 +60,7 @@ export async function submit(picks: { rotation: number; department: string }[]):
   if (!session) return { error: "Please log in." };
   const result = await submitSelections({ roll: session.roll, picks });
   if (!result.ok) return { error: result.error };
+  await logAccess({ roll_no: session.roll, actor: session.roll, action: "submit" });
   revalidatePath("/");
   revalidatePath("/select");
   return {};
