@@ -1,0 +1,138 @@
+import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/auth";
+import {
+  getStudentsWithOverrides,
+  getDepartmentsWithOverrides,
+  getStaticStudents,
+  getStaticDepartments,
+} from "@/lib/data";
+import { getAllSelections } from "@/lib/selections";
+import { CapacityEditor } from "./CapacityEditor";
+import { StudentEditor } from "./StudentEditor";
+import { AdminLogoutButton } from "./AdminLogoutButton";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminPage() {
+  if (!(await isAdmin())) redirect("/admin/login");
+
+  const [students, departments, selections] = await Promise.all([
+    getStudentsWithOverrides(),
+    getDepartmentsWithOverrides(),
+    getAllSelections(),
+  ]);
+
+  const submittedRolls = new Set(selections.map((s) => s.roll_no));
+  const passes = students.filter((s) => s.overall === "Pass").length;
+  const fails = students.length - passes;
+
+  const staticStudents = getStaticStudents();
+  const staticDepts = getStaticDepartments();
+  const staticDeptMap = new Map(staticDepts.map((d) => [d.name, d.capacity]));
+  const staticStudentMap = new Map(staticStudents.map((s) => [s.roll_no, s]));
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-10 space-y-8">
+      <header className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-navy-800">
+            Admin
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold text-slate-900">Control panel</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Correct student data, adjust seat capacities, or reset a user&apos;s submission.
+          </p>
+        </div>
+        <AdminLogoutButton />
+      </header>
+
+      <div className="grid sm:grid-cols-4 gap-3">
+        <Stat label="Students" value={students.length.toString()} tone="slate" />
+        <Stat label="Pass" value={passes.toString()} tone="emerald" />
+        <Stat label="Fail" value={fails.toString()} tone="rose" />
+        <Stat label="Submitted" value={`${submittedRolls.size}`} tone="teal" />
+      </div>
+
+      <section>
+        <SectionHeader
+          title="Departments & capacity"
+          subtitle="Capacity is per rotation — each department holds this many House Officers each 3-month rotation. Click a number to edit."
+        />
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="scrollx">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Department</th>
+                  <th className="text-center px-4 py-3 font-medium">Capacity</th>
+                  <th className="text-center px-4 py-3 font-medium">Original (PDF)</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {departments.map((d) => (
+                  <CapacityEditor
+                    key={d.name}
+                    name={d.name}
+                    capacity={d.capacity}
+                    original={staticDeptMap.get(d.name) ?? d.capacity}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeader
+          title="Students"
+          subtitle="OCR-extracted from the result PDF. Edit any name, total marks, or pass/fail status; hide non-applicable rows; or reset a user's submitted selection."
+        />
+        <StudentEditor
+          students={students}
+          submittedRolls={Array.from(submittedRolls)}
+          staticStudentMap={Object.fromEntries(
+            Array.from(staticStudentMap.entries()).map(([k, v]) => [
+              k,
+              { name: v.name, total: v.total, overall: v.overall, rank: v.rank },
+            ]),
+          )}
+        />
+      </section>
+    </div>
+  );
+}
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="mb-3">
+      <h2 className="text-lg md:text-xl font-semibold text-slate-900">{title}</h2>
+      <p className="text-sm text-slate-500 mt-0.5 max-w-2xl">{subtitle}</p>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "slate" | "emerald" | "rose" | "teal";
+}) {
+  const cls = {
+    slate: "bg-white ring-slate-200 text-slate-900",
+    emerald: "bg-emerald-50 ring-emerald-100 text-emerald-900",
+    rose: "bg-rose-50 ring-rose-100 text-rose-900",
+    teal: "bg-teal-50 ring-teal-100 text-teal-900",
+  }[tone];
+  return (
+    <div className={`rounded-xl ring-1 px-4 py-3 ${cls}`}>
+      <div className="text-[11px] uppercase tracking-wider opacity-70">{label}</div>
+      <div className="mt-0.5 text-2xl font-semibold tabular-nums">{value}</div>
+    </div>
+  );
+}
+

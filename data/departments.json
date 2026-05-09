@@ -1,0 +1,158 @@
+[
+  {
+    "name": "Medical Unit-I",
+    "capacity": 13
+  },
+  {
+    "name": "Medical Unit-II",
+    "capacity": 12
+  },
+  {
+    "name": "Medical Unit-III",
+    "capacity": 10
+  },
+  {
+    "name": "Medical Unit-IV",
+    "capacity": 13
+  },
+  {
+    "name": "Medical Unit-V",
+    "capacity": 14
+  },
+  {
+    "name": "Nephrology (Allied)",
+    "capacity": 3
+  },
+  {
+    "name": "Nephrology (Allied-II)",
+    "capacity": 2
+  },
+  {
+    "name": "Chest (Allied-II)",
+    "capacity": 3
+  },
+  {
+    "name": "Paediatric MU-I",
+    "capacity": 8
+  },
+  {
+    "name": "Paediatric MU-II",
+    "capacity": 8
+  },
+  {
+    "name": "Paediatric MU-III (Allied-II)",
+    "capacity": 14
+  },
+  {
+    "name": "Psychiatry (Allied-II)",
+    "capacity": 3
+  },
+  {
+    "name": "Anaesthesia & ICU",
+    "capacity": 6
+  },
+  {
+    "name": "Dermatology (Allied-II)",
+    "capacity": 3
+  },
+  {
+    "name": "Radiotherapy",
+    "capacity": 3
+  },
+  {
+    "name": "Medical Oncology",
+    "capacity": 3
+  },
+  {
+    "name": "Neurology",
+    "capacity": 3
+  },
+  {
+    "name": "Radiology",
+    "capacity": 1
+  },
+  {
+    "name": "Pulmonology",
+    "capacity": 2
+  },
+  {
+    "name": "Surgical Unit-I",
+    "capacity": 13
+  },
+  {
+    "name": "Surgical Unit-II",
+    "capacity": 13
+  },
+  {
+    "name": "Surgical Unit-III",
+    "capacity": 14
+  },
+  {
+    "name": "Surgical Unit-IV",
+    "capacity": 12
+  },
+  {
+    "name": "Surgical Unit-V",
+    "capacity": 13
+  },
+  {
+    "name": "Neurosurgery",
+    "capacity": 5
+  },
+  {
+    "name": "Paediatric Surgery",
+    "capacity": 3
+  },
+  {
+    "name": "Plastic Surgery",
+    "capacity": 4
+  },
+  {
+    "name": "Urology",
+    "capacity": 3
+  },
+  {
+    "name": "Urology (Allied-II)",
+    "capacity": 3
+  },
+  {
+    "name": "Gynae Unit-I (Allied)",
+    "capacity": 7
+  },
+  {
+    "name": "Gynae Unit-II (Allied)",
+    "capacity": 8
+  },
+  {
+    "name": "Gynae Unit-III (Allied-II)",
+    "capacity": 9
+  },
+  {
+    "name": "Orthopaedic (Allied)",
+    "capacity": 4
+  },
+  {
+    "name": "Orthopaedic (Allied-II)",
+    "capacity": 5
+  },
+  {
+    "name": "Ophthalmology (Allied)",
+    "capacity": 4
+  },
+  {
+    "name": "Ophthalmology (Allied-II)",
+    "capacity": 2
+  },
+  {
+    "name": "ENT Unit-I",
+    "capacity": 2
+  },
+  {
+    "name": "ENT Unit-II",
+    "capacity": 3
+  },
+  {
+    "name": "ENT (Allied-II)",
+    "capacity": 4
+  }
+]

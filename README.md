@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# House Job Selection Portal — Allied Hospital, Faisalabad
 
-## Getting Started
+Online seat-selection portal for FMU House Officers (2026-27 batch).
 
-First, run the development server:
+- Public live roster + seat matrix on `/`
+- Roll-number login (`/login`)
+- 4-rotation seat picker (`/select`) — atomic submit, locked thereafter
+- Admin panel (`/admin`) — fix OCR'd student data, adjust capacities, reset users
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Next.js 16 (App Router, Turbopack, React 19.2, React Compiler)
+- Tailwind CSS 4
+- Postgres (Vercel Postgres / Neon) via the `postgres` npm package
+- Static student & department data baked into `data/*.json`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Install deps:
+   ```bash
+   npm install
+   ```
+2. Get a free Postgres database — e.g. [Neon](https://neon.tech) or [Vercel Postgres](https://vercel.com/storage/postgres). Copy the connection string.
+3. Create `.env.local`:
+   ```env
+   DATABASE_URL="postgres://…"
+   SESSION_SECRET="any-long-random-string"
+   ADMIN_PASSWORD="set-a-strong-password"
+   ```
+4. Run:
+   ```bash
+   npm run dev
+   ```
+   The schema auto-creates on first request.
+5. Visit http://localhost:3000
 
-## Learn More
+Default admin password (dev only) is `admin1234`.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploying to Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push to GitHub, then import the repo in Vercel.
+2. Add a Postgres database in **Storage → Create → Postgres**. Vercel injects `DATABASE_URL` automatically.
+3. In **Settings → Environment Variables**, add:
+   - `SESSION_SECRET` — any 32+ char random string
+   - `ADMIN_PASSWORD` — your admin password
+4. Deploy. The schema auto-creates on first request.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Data
 
-## Deploy on Vercel
+- `data/students.json` — OCR-extracted from *Result MBBS Final Prof. Annual 2025*. Edit per-row in the admin panel; corrections persist in `student_overrides`.
+- `data/departments.json` — OCR-extracted from *PMC Regular HO 25*. Capacities are per rotation; adjust in the admin panel via `dept_overrides`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Selection rules
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Roll number must be in this year's roster and marked **Pass**.
+- Each user picks **4 distinct departments**, one per rotation, **all at once**.
+- Seats are first-come-first-served; full seats are disabled in the picker.
+- Submission is **final** — only an admin can reset a user.
+
+## Admin powers
+
+- Edit any student's name / total marks / pass-fail / rank
+- Hide a student (e.g. wrong batch)
+- Adjust seat capacity per department
+- Reset a user's submission (clears their 4 picks; they can re-submit)
