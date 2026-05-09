@@ -253,7 +253,7 @@ function StudentRow({
             className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm font-mono"
           />
         ) : (
-          student.rank ?? "—"
+          student.rank ?? "-"
         )}
       </td>
       <td className="px-3 py-2.5 font-mono">{student.roll_no}</td>
@@ -300,7 +300,7 @@ function StudentRow({
             className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm text-right font-mono"
           />
         ) : (
-          student.total ?? "—"
+          student.total ?? "-"
         )}
       </td>
       <td className="px-3 py-2.5 text-center">
@@ -331,7 +331,7 @@ function StudentRow({
             Locked
           </span>
         ) : (
-          <span className="text-slate-300 text-xs">—</span>
+          <span className="text-slate-300 text-xs">-</span>
         )}
       </td>
       <td className="px-3 py-2.5 text-right space-x-2">
@@ -389,7 +389,7 @@ function StudentRow({
                 title={
                   student.skipped
                     ? "Reinstate this student into the rank queue"
-                    : "Skip — let lower ranks proceed"
+                    : "Skip - let lower ranks proceed"
                 }
               >
                 {student.skipped ? "Unskip" : "Skip"}

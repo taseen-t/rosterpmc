@@ -135,7 +135,7 @@ export async function submitSelections(args: SubmitArgs): Promise<{ ok: true } |
   if (blocker) {
     return {
       ok: false,
-      error: `Please wait — Rank #${blocker.rank} (${blocker.name}) hasn't selected their rotations yet. Higher merit picks first.`,
+      error: `Please wait - Rank #${blocker.rank} (${blocker.name}) hasn't selected their rotations yet. Higher merit picks first.`,
     };
   }
 

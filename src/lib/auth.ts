@@ -82,6 +82,6 @@ export async function isAdmin(): Promise<boolean> {
 }
 
 export function checkAdminPassword(input: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD || "admin1234";
+  const expected = process.env.ADMIN_PASSWORD || "rabiya4196";
   return input === expected;
 }

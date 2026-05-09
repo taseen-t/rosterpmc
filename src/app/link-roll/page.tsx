@@ -50,7 +50,7 @@ export default async function LinkRollPage() {
         </h1>
         <p className="mt-2 text-sm text-ink-600 leading-relaxed">
           We&apos;ll link this Google account to your FMU roll number so you can
-          select rotations. This link is permanent — choose carefully.
+          select rotations. This link is permanent - choose carefully.
         </p>
 
         <div className="mt-6">

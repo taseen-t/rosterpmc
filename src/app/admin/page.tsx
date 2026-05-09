@@ -117,7 +117,7 @@ export default async function AdminPage() {
       <section>
         <SectionHeader
           title="Departments & capacity"
-          subtitle="Capacity is per rotation — each department holds this many House Officers each 3-month rotation. Click a number to edit."
+          subtitle="Capacity is per rotation - each department holds this many House Officers each 3-month rotation. Click a number to edit."
         />
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="scrollx">

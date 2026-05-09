@@ -33,7 +33,7 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 function detectDevice(ua: string | null): string {
-  if (!ua) return "—";
+  if (!ua) return "-";
   if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
   if (/Android/.test(ua)) return "Android";
   if (/Macintosh/.test(ua)) return "macOS";
@@ -43,7 +43,7 @@ function detectDevice(ua: string | null): string {
 }
 
 function detectBrowser(ua: string | null): string {
-  if (!ua) return "—";
+  if (!ua) return "-";
   if (/Edg\//.test(ua)) return "Edge";
   if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) return "Chrome";
   if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return "Safari";
@@ -146,7 +146,7 @@ export function SessionsView({ rows }: { rows: Row[] }) {
                       )}
                     </span>
                   ) : (
-                    <span className="text-ink-400">—</span>
+                    <span className="text-ink-400">-</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5 text-ink-700">

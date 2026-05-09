@@ -35,7 +35,7 @@ export async function loginStudent(formData: FormData): Promise<{ error?: string
     await logAccess({ roll_no: roll, actor: roll, action: "login_fail_not_pass" });
     return {
       error:
-        "Sorry — only candidates marked as Passed in the Final Professional MBBS result can log in.",
+        "Sorry - only candidates marked as Passed in the Final Professional MBBS result can log in.",
     };
   }
   await logAccess({ roll_no: roll, actor: roll, action: "login_success" });
@@ -72,7 +72,7 @@ export async function linkRoll(roll: string): Promise<{ error?: string }> {
     });
     return {
       error:
-        "Sorry — only candidates marked as Passed in the Final Professional MBBS result can sign in.",
+        "Sorry - only candidates marked as Passed in the Final Professional MBBS result can sign in.",
     };
   }
 

@@ -29,10 +29,6 @@ export default async function AdminLoginPage() {
           </div>
         </div>
         <AdminLoginForm />
-        <p className="mt-6 text-xs text-slate-500">
-          Set the admin password via the <code>ADMIN_PASSWORD</code> environment variable
-          on Vercel. Default in dev is <code>admin1234</code>.
-        </p>
       </div>
     </div>
   );

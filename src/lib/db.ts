@@ -98,7 +98,7 @@ async function runSchema() {
       );
       CREATE INDEX IF NOT EXISTS idx_support_unresolved ON support_requests (created_at DESC) WHERE NOT resolved;
 
-      -- Audit trail of every access attempt against a roll number — login
+      -- Audit trail of every access attempt against a roll number - login
       -- successes/failures and select-page views. Lets the admin see who
       -- tried to log in as whom, from where, and when.
       CREATE TABLE IF NOT EXISTS access_log (

@@ -33,7 +33,7 @@ export async function logAccess(entry: AccessEntry): Promise<void> {
       VALUES (${entry.roll_no}, ${entry.actor ?? null}, ${entry.action}, ${ip}, ${country}, ${city}, ${ua})
     `;
   } catch {
-    // Logging is best-effort — never let it break the user flow.
+    // Logging is best-effort - never let it break the user flow.
   }
 }
 

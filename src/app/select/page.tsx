@@ -111,7 +111,7 @@ function BlockerView({
         </span>
         <div className="flex-1">
           <h2 className="font-display text-2xl font-semibold text-amber-900 tracking-tight">
-            Please wait — higher rank picks first
+            Please wait - higher rank picks first
           </h2>
           <p className="mt-2 text-sm text-amber-900/80 leading-relaxed">
             Selection is locked until candidates ranked above you submit. Rank{" "}
@@ -121,7 +121,7 @@ function BlockerView({
             hasn&apos;t selected their rotations yet.
           </p>
           <p className="mt-3 text-sm text-amber-900/80 leading-relaxed">
-            This page will refresh automatically — keep it open. Once they submit, this
+            This page will refresh automatically - keep it open. Once they submit, this
             block lifts and you can pick your rotations.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
@@ -192,7 +192,7 @@ function SubmittedView({
                 <span className="font-mono">{r.dates}</span>
               </div>
               <div className="mt-1 text-base font-medium text-slate-900">
-                {sel?.department ?? "—"}
+                {sel?.department ?? "-"}
               </div>
             </div>
           );
