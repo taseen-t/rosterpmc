@@ -37,7 +37,7 @@ export default async function HomePage() {
               Office of the Medical Superintendent
             </p>
             <h1 className="mt-2 text-2xl md:text-3xl font-semibold leading-tight">
-              House Officer Seat Selection
+              House Officer Seat Selection{" "}
               <br className="hidden md:block" />
               <span className="text-teal-100">
                 Allied Hospital, Faisalabad — 2026-27
