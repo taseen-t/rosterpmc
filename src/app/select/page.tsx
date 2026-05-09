@@ -30,24 +30,36 @@ export default async function SelectPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 md:px-6 py-8 md:py-10 space-y-8">
-      <header className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 md:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <header className="relative overflow-hidden rounded-2xl border border-teal-900/10 shadow-[0_20px_40px_-25px_rgba(11,62,79,0.4)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-800 to-navy-900" />
+        <div className="absolute inset-0 bg-rx opacity-90" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4 p-6 md:p-8 text-white">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-100/80">
               Welcome, House Officer
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-900">
+            <h1 className="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
               {me.name}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Roll <span className="font-mono">{me.roll_no}</span>
-              {me.rank ? ` · Merit rank #${me.rank}` : ""}
-              {me.total ? ` · ${me.total}/1500 marks` : ""}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-teal-50/85">
+              <span className="font-mono">Roll {me.roll_no}</span>
+              {me.rank != null && (
+                <>
+                  <span className="opacity-50">·</span>
+                  <span>Merit rank <span className="font-semibold text-white">#{me.rank}</span></span>
+                </>
+              )}
+              {me.total != null && (
+                <>
+                  <span className="opacity-50">·</span>
+                  <span><span className="font-semibold text-white">{me.total}</span>/1500 marks</span>
+                </>
+              )}
+            </div>
           </div>
           <Link
             href="/"
-            className="text-sm text-slate-500 hover:text-slate-700"
+            className="text-sm text-teal-100/80 hover:text-white transition-colors"
           >
             ← Back to roster
           </Link>

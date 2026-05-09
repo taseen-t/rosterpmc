@@ -35,10 +35,20 @@ export default async function AdminPage() {
     <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-10 space-y-8">
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-navy-800">
-            Admin
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-slate-900">Control panel</h1>
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-navy-800/10 text-navy-800 text-[10px] uppercase tracking-[0.16em] font-semibold ring-1 ring-navy-800/15">
+              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z" />
+              </svg>
+              Admin
+            </span>
+            <span className="text-[11px] uppercase tracking-[0.14em] text-slate-400">
+              Office of the Medical Superintendent
+            </span>
+          </div>
+          <h1 className="mt-2 font-display text-3xl md:text-[34px] font-semibold text-slate-900 tracking-tight">
+            Control panel
+          </h1>
           <p className="text-sm text-slate-500 mt-1">
             Correct student data, adjust seat capacities, or reset a user&apos;s submission.
           </p>

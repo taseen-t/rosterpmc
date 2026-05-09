@@ -1,59 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f9fb;
+  --background: #f6f4ee;
+  --cream: #f6f4ee;
   --foreground: #0c1727;
+
   --teal-50: #effcfa;
   --teal-100: #cef7f1;
   --teal-200: #9aeee0;
+  --teal-300: #5fdcc7;
   --teal-500: #14b8a6;
   --teal-600: #0e8c7e;
   --teal-700: #0c6b5f;
+  --teal-800: #0a4e44;
+
   --navy-700: #0f3d6e;
   --navy-800: #0b2e54;
+  --navy-900: #082040;
+
+  --emerald-50: #ecfdf5;
+  --emerald-100: #d1fae5;
+  --emerald-700: #047857;
+
+  --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-700: #b45309;
+
+  --rose-50: #fff1f2;
+  --rose-100: #ffe4e6;
+  --rose-700: #be123c;
+
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
   --slate-500: #64748b;
+  --slate-600: #475569;
   --slate-700: #334155;
+  --slate-800: #1e293b;
   --slate-900: #0f172a;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-cream: var(--cream);
   --color-foreground: var(--foreground);
   --color-teal-50: var(--teal-50);
   --color-teal-100: var(--teal-100);
   --color-teal-200: var(--teal-200);
+  --color-teal-300: var(--teal-300);
   --color-teal-500: var(--teal-500);
   --color-teal-600: var(--teal-600);
   --color-teal-700: var(--teal-700);
+  --color-teal-800: var(--teal-800);
   --color-navy-700: var(--navy-700);
   --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+  --color-emerald-50: var(--emerald-50);
+  --color-emerald-100: var(--emerald-100);
+  --color-emerald-700: var(--emerald-700);
+  --color-amber-50: var(--amber-50);
+  --color-amber-100: var(--amber-100);
+  --color-amber-700: var(--amber-700);
+  --color-rose-50: var(--rose-50);
+  --color-rose-100: var(--rose-100);
+  --color-rose-700: var(--rose-700);
   --color-slate-50: var(--slate-50);
   --color-slate-100: var(--slate-100);
   --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
   --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
   --color-slate-700: var(--slate-700);
+  --color-slate-800: var(--slate-800);
   --color-slate-900: var(--slate-900);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.06), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(11, 46, 84, 0.05), transparent 40%),
+    var(--cream);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
 }
 
-/* Clean medical-style focus ring */
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-feature-settings: "ss01";
+}
+
 *:focus-visible {
   outline: 2px solid var(--teal-500);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Smooth scrollbar in tables */
 .scrollx {
   overflow-x: auto;
   scrollbar-width: thin;
@@ -65,4 +112,30 @@ body {
 .scrollx::-webkit-scrollbar-thumb {
   background: var(--slate-200);
   border-radius: 4px;
+}
+
+/* Hospital cross pattern background */
+.bg-rx {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Live pulse */
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+.live-dot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pulse-soft 2s ease-out infinite;
+}
+
+/* Subtle hairline divider */
+.hr-fade {
+  background: linear-gradient(to right, transparent, var(--slate-200), transparent);
 }
