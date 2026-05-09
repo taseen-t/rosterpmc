@@ -135,7 +135,7 @@ function BlockerView({
               href="/contact"
               className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-white hover:bg-amber-50 text-amber-900 px-4 py-2 text-sm"
             >
-              Contact MS Office
+              Contact Support
             </Link>
           </div>
         </div>
@@ -173,8 +173,8 @@ function SubmittedView({
             Your selection is locked.
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Selection has been submitted and cannot be changed. The Office of the Medical
-            Superintendent has been notified.
+            Selection has been submitted and cannot be changed. Reach out via Contact
+            Support if anything looks wrong.
           </p>
         </div>
       </div>

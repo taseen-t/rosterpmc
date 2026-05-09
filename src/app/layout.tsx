@@ -112,8 +112,14 @@ export default async function RootLayout({
               <Link href="/" className="px-3 py-1.5 rounded-lg text-ink-700 hover:bg-hairline transition-colors">
                 Roster
               </Link>
-              <Link href="/contact" className="hidden md:inline-block px-3 py-1.5 rounded-lg text-ink-700 hover:bg-hairline transition-colors">
-                Support
+              <Link
+                href="/contact"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lime-300 hover:bg-lime-200 text-ink-900 font-medium ring-1 ring-lime-500/30 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-9 8.49 8.5 8.5 0 0 1-7.6-3.46L3 21l1.5-3.4A8.5 8.5 0 0 1 21 11.5z" />
+                </svg>
+                Contact Support
               </Link>
               {session ? (
                 <>
@@ -166,11 +172,11 @@ export default async function RootLayout({
               </p>
             </div>
             <div>
-              <p className="label-overline">Office</p>
+              <p className="label-overline">Disclaimer</p>
               <p className="mt-2 text-[15px] text-ink-700 leading-[1.55]">
-                Office of the Medical Superintendent
+                Independent, unofficial portal.
                 <br />
-                Allied Hospital, Faisalabad
+                Not affiliated with the hospital administration.
               </p>
             </div>
             <div>
@@ -185,13 +191,8 @@ export default async function RootLayout({
           </div>
           <div className="border-t border-hairline">
             <div className="mx-auto max-w-6xl px-4 md:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-400">
-              <span>© {new Date().getFullYear()} · Internal use only.</span>
-              <p className="font-display text-[14px] text-ink-700">
-                Built by{" "}
-                <span className="text-ink-900 font-medium">Dr Rabiya Tariq</span>
-                <span aria-hidden className="neon-x">×</span>
-                <span className="text-ink-900 font-medium">Mohammad Taseen Tariq</span>
-              </p>
+              <span>© {new Date().getFullYear()} · Independent portal · Not officially affiliated.</span>
+              <span className="font-mono">rosterpmc.vercel.app</span>
             </div>
           </div>
         </footer>

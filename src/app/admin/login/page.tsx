@@ -25,9 +25,7 @@ export default async function AdminLoginPage() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-slate-900">Admin login</h1>
-            <p className="text-sm text-slate-500">
-              Office of the Medical Superintendent
-            </p>
+            <p className="text-sm text-slate-500">Roster control panel</p>
           </div>
         </div>
         <AdminLoginForm />

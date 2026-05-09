@@ -127,7 +127,7 @@ export async function submitSelections(args: SubmitArgs): Promise<{ ok: true } |
   const me = students.find((s) => s.roll_no === roll);
   if (!me) return { ok: false, error: "Roll number not recognized." };
   if (me.overall !== "Pass") return { ok: false, error: "Only candidates who passed are eligible." };
-  if (me.rank == null) return { ok: false, error: "Your rank is not set. Contact the MS Office." };
+  if (me.rank == null) return { ok: false, error: "Your rank is not set. Contact Support." };
 
   // Rank-based locking: a lower-ranked student cannot submit until every
   // higher-ranked student has either submitted or been skipped by admin.

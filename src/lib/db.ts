@@ -113,6 +113,24 @@ async function runSchema() {
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_access_log_roll ON access_log (roll_no, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_access_log_recent ON access_log (created_at DESC);
+
+      -- Google OAuth: link a Google identity to a roll number. The same
+      -- email cannot link to two rolls; the same roll can be linked to
+      -- exactly one Google email at a time. Admin can unlink to allow
+      -- relinking.
+      CREATE TABLE IF NOT EXISTS google_links (
+        google_email    TEXT PRIMARY KEY,
+        google_sub      TEXT,
+        google_name     TEXT,
+        google_picture  TEXT,
+        roll_no         TEXT,
+        linked_at       TIMESTAMPTZ,
+        first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_google_links_roll
+        ON google_links (roll_no) WHERE roll_no IS NOT NULL;
     `);
   } finally {
     await sql`SELECT pg_advisory_unlock(${LOCK_KEY})`;

@@ -15,6 +15,11 @@ import { getStaticStudentByRoll, getStudentsWithOverrides } from "@/lib/data";
 import { submitSelections } from "@/lib/selections";
 import { sql, ensureSchema } from "@/lib/db";
 import { logAccess } from "@/lib/access";
+import {
+  clearGoogleSession,
+  getGoogleSession,
+  linkRollToGoogle,
+} from "@/lib/google";
 
 export async function loginStudent(formData: FormData): Promise<{ error?: string }> {
   const roll = String(formData.get("roll") || "").trim();
@@ -41,6 +46,52 @@ export async function loginStudent(formData: FormData): Promise<{ error?: string
 export async function logout(): Promise<void> {
   await clearStudentSession();
   redirect("/");
+}
+
+export async function linkRoll(roll: string): Promise<{ error?: string }> {
+  const google = await getGoogleSession();
+  if (!google) return { error: "Sign in with Google first." };
+  const cleaned = roll.trim();
+  if (!/^\d{4,8}$/.test(cleaned)) return { error: "Enter a valid roll number." };
+
+  const students = await getStudentsWithOverrides();
+  const me = students.find((s) => s.roll_no === cleaned);
+  if (!me) {
+    await logAccess({
+      roll_no: cleaned,
+      actor: google.email,
+      action: "login_fail_unknown",
+    });
+    return { error: "Roll number not found in this year's batch." };
+  }
+  if (me.overall !== "Pass") {
+    await logAccess({
+      roll_no: cleaned,
+      actor: google.email,
+      action: "login_fail_not_pass",
+    });
+    return {
+      error:
+        "Sorry — only candidates marked as Passed in the Final Professional MBBS result can sign in.",
+    };
+  }
+
+  const result = await linkRollToGoogle(google.email, cleaned);
+  if (!result.ok) return { error: result.error ?? "Could not link." };
+
+  await setStudentSession(cleaned);
+  await logAccess({
+    roll_no: cleaned,
+    actor: google.email,
+    action: "login_success",
+  });
+  redirect("/select");
+}
+
+export async function googleLogout(): Promise<void> {
+  await clearGoogleSession();
+  await clearStudentSession();
+  redirect("/login");
 }
 
 export async function loginAdmin(formData: FormData): Promise<{ error?: string }> {

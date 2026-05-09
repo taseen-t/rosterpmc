@@ -8,11 +8,13 @@ import {
 } from "@/lib/data";
 import { getAllSelections } from "@/lib/selections";
 import { sql, ensureSchema } from "@/lib/db";
+import { getRecentAccessLog } from "@/lib/access";
 import { CapacityEditor } from "./CapacityEditor";
 import { StudentEditor } from "./StudentEditor";
 import { AdminLogoutButton } from "./AdminLogoutButton";
 import { AddStudentForm } from "./AddStudentForm";
 import { SupportRequests } from "./SupportRequests";
+import { SessionsView } from "./SessionsView";
 
 type SupportRow = {
   id: number;
@@ -30,7 +32,7 @@ export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
   await ensureSchema();
-  const [students, departments, selections, supportRows] = await Promise.all([
+  const [students, departments, selections, supportRows, accessRows] = await Promise.all([
     getStudentsWithOverrides(),
     getDepartmentsWithOverrides(),
     getAllSelections(),
@@ -40,6 +42,7 @@ export default async function AdminPage() {
       ORDER BY resolved ASC, created_at DESC
       LIMIT 200
     `,
+    getRecentAccessLog(300),
   ]);
 
   const submittedRolls = new Set(selections.map((s) => s.roll_no));
@@ -63,7 +66,7 @@ export default async function AdminPage() {
               Admin
             </span>
             <span className="text-[11px] uppercase tracking-[0.14em] text-slate-400">
-              Office of the Medical Superintendent
+              Roster control panel
             </span>
           </div>
           <h1 className="mt-2 font-display text-3xl md:text-[34px] font-semibold text-slate-900 tracking-tight">
@@ -168,6 +171,14 @@ export default async function AdminPage() {
           subtitle="Messages submitted by students through the Contact Support form."
         />
         <SupportRequests rows={supportRows} />
+      </section>
+
+      <section>
+        <SectionHeader
+          title="Sessions & access log"
+          subtitle="Every login attempt and selection-page visit, with IP, location, and device. Use the search to look up activity for a specific roll, IP, or city."
+        />
+        <SessionsView rows={accessRows} />
       </section>
     </div>
   );

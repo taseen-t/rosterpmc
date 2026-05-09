@@ -90,7 +90,7 @@ export default async function Image() {
               textTransform: "uppercase",
             }}
           >
-            Office of the Medical Superintendent
+            FMU House Officers · 2026-27
           </span>
           <span
             style={{

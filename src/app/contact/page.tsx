@@ -19,8 +19,8 @@ export default async function ContactPage() {
         </h1>
         <p className="text-sm text-slate-500 mt-2 max-w-xl leading-relaxed">
           Wrong roll number, misspelled name, missing from the roster, marks need
-          correction, can&apos;t log in — drop us a note and someone from the MS Office
-          will follow up. All requests are visible to the admin team.
+          correction, can&apos;t log in — drop us a note and an admin will follow up.
+          All requests are visible to the admin team.
         </p>
       </div>
 

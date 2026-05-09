@@ -60,6 +60,16 @@ export async function getAccessLog(roll: string, limit = 100): Promise<AccessRow
   `;
 }
 
+export async function getRecentAccessLog(limit = 200): Promise<AccessRow[]> {
+  await ensureSchema();
+  return await sql<AccessRow[]>`
+    SELECT id, roll_no, actor, action, ip, country, city, user_agent, created_at::text AS created_at
+    FROM access_log
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+}
+
 export async function getAccessSummary(roll: string): Promise<{
   total: number;
   successes: number;

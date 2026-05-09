@@ -44,7 +44,9 @@ export default async function HomePage() {
               <span className="!text-[10px] !text-paper">LIVE SELECTION</span>
             </span>
             <span className="text-ink-400">·</span>
-            <span className="!text-ink-700">Office of the Medical Superintendent</span>
+            <span className="!text-ink-700">FMU House Officers · 2026-27</span>
+            <span className="text-ink-400">·</span>
+            <span className="!text-ink-400 !text-[10px]">Unofficial portal</span>
           </div>
 
           <h1 className="mt-8 max-w-4xl font-display h1-display text-ink-900">
@@ -56,8 +58,16 @@ export default async function HomePage() {
           <p className="mt-6 max-w-2xl text-[18px] md:text-[19px] text-ink-700 leading-[1.55]">
             FMU graduates of the 2025 Final Professional batch choose their four
             three-month rotations through this portal. Seats are first-come-first-served
-            within capacity. Once submitted, picks are final — only the MS Office can
+            within capacity. Once submitted, picks are final — only an admin can
             reset them.
+          </p>
+
+          {/* Authors credit — visible in hero */}
+          <p className="mt-5 font-display text-[15px] md:text-[16px] text-ink-700">
+            Built by{" "}
+            <span className="text-ink-900 font-medium">Dr Rabiya Tariq</span>
+            <span aria-hidden className="neon-x">×</span>
+            <span className="text-ink-900 font-medium">Mohammad Taseen Tariq</span>
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -108,7 +118,7 @@ export default async function HomePage() {
         <StatusCard
           icon="alert"
           title="Final on submit"
-          desc="Department changes require MS Office reset"
+          desc="Department changes require an admin reset"
         />
       </section>
 

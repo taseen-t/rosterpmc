@@ -50,8 +50,8 @@ export function ContactForm({ defaultRoll }: { defaultRoll: string }) {
           Request received
         </h2>
         <p className="mt-1.5 text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-          The MS Office will review and follow up. You can submit another request below
-          if you have more issues.
+          An admin will review and follow up. You can submit another request below if
+          you have more issues.
         </p>
         <button
           type="button"
