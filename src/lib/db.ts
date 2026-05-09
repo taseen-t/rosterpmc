@@ -1,15 +1,17 @@
 import postgres from "postgres";
 
+type Sql = ReturnType<typeof postgres>;
+
 declare global {
-  var __sql: ReturnType<typeof postgres> | undefined;
+  var __sql: Sql | undefined;
   var __schemaPromise: Promise<void> | undefined;
 }
 
-function makeSql() {
+function makeSql(): Sql {
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error(
-      "DATABASE_URL is not set. For Vercel: connect a Postgres database in the dashboard. For local dev: create a free Neon database (https://neon.tech) and put the connection string in .env.local",
+      "DATABASE_URL is not set. For Vercel: connect a Postgres database in Storage (it auto-injects DATABASE_URL). For local dev: put a connection string in .env.local.",
     );
   }
   return postgres(url, {
@@ -20,7 +22,23 @@ function makeSql() {
   });
 }
 
-export const sql = (globalThis.__sql ??= makeSql());
+function getSqlInstance(): Sql {
+  return (globalThis.__sql ??= makeSql());
+}
+
+// Lazy proxy: the postgres client is created on first use, not at module load.
+// This lets the Next.js production build succeed without DATABASE_URL — the
+// connection is only established when a request actually queries the DB.
+export const sql = new Proxy({} as Sql, {
+  get(_t, prop) {
+    const target = getSqlInstance() as unknown as Record<string | symbol, unknown>;
+    const value = target[prop];
+    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(target) : value;
+  },
+  apply(_t, _this, args) {
+    return (getSqlInstance() as unknown as (...a: unknown[]) => unknown)(...args);
+  },
+}) as Sql;
 
 async function runSchema() {
   await sql.unsafe(`
