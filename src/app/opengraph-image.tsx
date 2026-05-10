@@ -47,22 +47,10 @@ export default async function Image() {
               justifyContent: "center",
             }}
           >
-            <svg width="44" height="44" viewBox="0 0 32 32">
-              <circle
-                cx="16"
-                cy="16"
-                r="10"
-                fill="none"
-                stroke="rgba(255,255,255,0.55)"
-                strokeWidth="1.6"
-                strokeDasharray="2 2.4"
-                strokeLinecap="round"
-              />
+            <svg width="40" height="40" viewBox="0 0 9 9">
               <path
-                d="M16 10v12 M10 16h12"
-                stroke="white"
-                strokeWidth="2.8"
-                strokeLinecap="round"
+                d="M 6.726 4.5 C 7.955 4.5 8.952 5.498 8.952 6.729 C 8.952 7.959 7.955 8.957 6.726 8.957 L 2.274 8.957 C 1.045 8.957 0.048 7.959 0.048 6.729 C 0.048 5.498 1.045 4.5 2.274 4.5 C 1.045 4.5 0.048 3.502 0.048 2.271 C 0.048 1.041 1.045 0.043 2.274 0.043 L 6.726 0.043 C 7.955 0.043 8.952 1.041 8.952 2.271 C 8.952 3.502 7.955 4.5 6.726 4.5 Z"
+                fill="white"
               />
             </svg>
           </div>

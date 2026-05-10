@@ -37,10 +37,9 @@ export default async function LoginPage({
     <div className="mx-auto max-w-md px-4 md:px-6 py-12 md:py-20">
       <div className="rounded-2xl border border-hairline bg-paper shadow-[0_30px_60px_-30px_rgba(15,15,15,0.18)] p-7 md:p-9">
         <div className="flex items-start gap-3 mb-7">
-          <span aria-hidden className="inline-flex h-11 w-11 rounded-xl bg-ink-900 grid place-items-center ring-1 ring-inset ring-white/10">
-            <svg viewBox="0 0 32 32" className="h-7 w-7 text-lime-300" aria-hidden>
-              <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.4" strokeDasharray="2 2.4" strokeLinecap="round" />
-              <path d="M16 10v12 M10 16h12" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+          <span aria-hidden className="inline-flex h-11 w-11 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-sm ring-1 ring-inset ring-white/20">
+            <svg viewBox="0 0 9 9" className="h-5 w-5 text-white" aria-hidden>
+              <path d="M 6.726 4.5 C 7.955 4.5 8.952 5.498 8.952 6.729 C 8.952 7.959 7.955 8.957 6.726 8.957 L 2.274 8.957 C 1.045 8.957 0.048 7.959 0.048 6.729 C 0.048 5.498 1.045 4.5 2.274 4.5 C 1.045 4.5 0.048 3.502 0.048 2.271 C 0.048 1.041 1.045 0.043 2.274 0.043 L 6.726 0.043 C 7.955 0.043 8.952 1.041 8.952 2.271 C 8.952 3.502 7.955 4.5 6.726 4.5 Z" fill="currentColor"/>
             </svg>
           </span>
           <div>

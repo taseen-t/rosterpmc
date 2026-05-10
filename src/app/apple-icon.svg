@@ -4,12 +4,9 @@
       <stop offset="0" stop-color="#14b8a6"/>
       <stop offset="1" stop-color="#0b3d4f"/>
     </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ecfdf5" stop-opacity="0.95"/>
-      <stop offset="1" stop-color="#a7f3d0" stop-opacity="0.55"/>
-    </linearGradient>
   </defs>
   <rect width="180" height="180" rx="40" fill="url(#bg)"/>
-  <circle cx="90" cy="90" r="56" fill="none" stroke="url(#ring)" stroke-width="6" stroke-dasharray="10 12" stroke-linecap="round"/>
-  <path d="M90 56v68 M56 90h68" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <g transform="translate(40 40)">
+    <path d="M 74.717 50 C 88.371 50 99.444 61.092 99.444 74.764 C 99.444 88.435 88.371 99.526 74.717 99.526 L 25.283 99.526 C 11.629 99.526 0.556 88.435 0.556 74.764 C 0.556 61.092 11.629 50 25.283 50 C 11.629 50 0.556 38.908 0.556 25.236 C 0.556 11.564 11.629 0.473 25.283 0.473 L 74.717 0.473 C 88.371 0.473 99.444 11.564 99.444 25.236 C 99.444 38.908 88.371 50 74.717 50 Z" fill="#ffffff"/>
+  </g>
 </svg>
