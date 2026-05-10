@@ -2,6 +2,17 @@ import studentsRaw from "../../data/students.json";
 import departmentsRaw from "../../data/departments.json";
 import { sql, ensureSchema } from "./db";
 
+/**
+ * Prefix "Dr " to a name when displayed publicly. They're MBBS graduates,
+ * so the title applies. Dedup-safe (won't double up if a record already
+ * starts with "Dr").
+ */
+export function withDr(name: string | null | undefined): string {
+  if (!name) return "";
+  if (/^dr\.?\s/i.test(name.trim())) return name.trim();
+  return `Dr ${name.trim()}`;
+}
+
 export type Subject = {
   subject: string;
   marks: number;
@@ -167,6 +178,13 @@ export async function getStudentsWithOverrides(): Promise<Student[]> {
     const ov = ovMap.get(s.roll_no);
     if (ov?.rank != null) {
       s.rank = ov.rank;
+    }
+    // Display: graduating MBBS doctors get the "Dr" honorific. Apply at the
+    // data layer so every consumer (homepage roster, admin panel, Excel
+    // export, OG card) shows the same prefixed name. Pass-only — Fails
+    // aren't doctors yet.
+    if (s.overall === "Pass") {
+      s.name = withDr(s.name);
     }
   }
 

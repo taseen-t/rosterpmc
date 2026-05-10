@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { logout, logoutAdmin } from "@/app/actions";
@@ -15,144 +15,285 @@ export function MobileNav({ signedIn, rollNo, isAdmin }: Props) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Close on route change.
+  // Close on route change
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  // Lock background scroll while open.
+  // Click outside to close
   useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prev;
-      };
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      const t = e.target as Node;
+      if (
+        !panelRef.current?.contains(t) &&
+        !buttonRef.current?.contains(t)
+      ) {
+        setOpen(false);
+      }
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
-    <>
+    <div className="md:hidden relative">
       <button
+        ref={buttonRef}
         type="button"
-        aria-label="Open menu"
-        onClick={() => setOpen(true)}
-        className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100"
+        aria-label={open ? "Close menu" : "Open menu"}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors"
       >
-        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {open ? (
+            <>
+              <path d="M18 6L6 18" />
+              <path d="M6 6l12 12" />
+            </>
+          ) : (
+            <>
+              <path d="M4 7h16" />
+              <path d="M4 12h16" />
+              <path d="M4 17h16" />
+            </>
+          )}
         </svg>
       </button>
 
-      {open && (
-        <div
-          className="md:hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="absolute right-0 top-0 h-full w-[82%] max-w-xs bg-white shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+      {/* Dropdown panel */}
+      <div
+        ref={panelRef}
+        className={`absolute right-0 top-12 w-72 origin-top-right rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-20px_rgba(11,62,79,0.25)] overflow-hidden transition-all duration-150 ${
+          open
+            ? "opacity-100 scale-100 pointer-events-auto"
+            : "opacity-0 scale-95 pointer-events-none"
+        }`}
+      >
+        <nav className="flex flex-col p-2 text-[15px]">
+          <NavLink href="/" icon="grid">
+            Roster
+          </NavLink>
+          <NavLink
+            href="/contact"
+            icon="message"
+            highlight
+            description="Wrong info? Reach out."
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <span className="text-sm font-semibold text-slate-900">Menu</span>
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={() => setOpen(false)}
-                className="inline-flex items-center justify-center h-9 w-9 rounded-md text-slate-500 hover:bg-slate-100"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
+            Contact Support
+          </NavLink>
 
-            <nav className="flex flex-col p-3 gap-1 text-[15px]">
-              <NavLink href="/">Roster</NavLink>
-              <Link
-                href="/contact"
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium"
-              >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-9 8.49 8.5 8.5 0 0 1-7.6-3.46L3 21l1.5-3.4A8.5 8.5 0 0 1 21 11.5z" />
-                </svg>
-                Contact Support
-              </Link>
-              {signedIn ? (
-                <>
-                  <NavLink href="/select">My Selection</NavLink>
-                  {rollNo && (
-                    <div className="px-3 py-2 text-xs text-slate-500 font-mono">
-                      Signed in: {rollNo}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await logout();
-                      router.refresh();
-                    }}
-                    className="text-left px-3 py-2.5 rounded-lg text-rose-600 hover:bg-rose-50"
-                  >
-                    Log out
-                  </button>
-                </>
-              ) : (
-                <NavLink href="/login" highlight>
-                  Login
-                </NavLink>
+          {signedIn ? (
+            <>
+              <Divider />
+              {rollNo && (
+                <div className="flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-slate-400">
+                  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-teal-500" />
+                  Roll <span className="font-mono text-slate-600">{rollNo}</span>
+                </div>
               )}
+              <NavLink href="/select" icon="check">
+                My Selection
+              </NavLink>
+              <ActionButton
+                onClick={async () => {
+                  await logout();
+                  router.refresh();
+                }}
+                tone="rose"
+                icon="logout"
+              >
+                Log out
+              </ActionButton>
+            </>
+          ) : (
+            <>
+              <Divider />
+              <NavLink href="/login" icon="login" primary>
+                Login
+              </NavLink>
+            </>
+          )}
 
-              <div className="my-2 h-px hr-fade" />
-
-              {isAdmin ? (
-                <>
-                  <NavLink href="/admin">Admin panel</NavLink>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await logoutAdmin();
-                      router.refresh();
-                    }}
-                    className="text-left px-3 py-2.5 rounded-lg text-rose-600 hover:bg-rose-50"
-                  >
-                    Admin sign out
-                  </button>
-                </>
-              ) : (
-                <NavLink href="/admin/login">Admin login</NavLink>
-              )}
-            </nav>
-          </div>
-        </div>
-      )}
-    </>
+          <Divider />
+          {isAdmin ? (
+            <>
+              <NavLink href="/admin" icon="shield">
+                Admin panel
+              </NavLink>
+              <ActionButton
+                onClick={async () => {
+                  await logoutAdmin();
+                  router.refresh();
+                }}
+                tone="slate"
+                icon="logout"
+              >
+                Admin sign out
+              </ActionButton>
+            </>
+          ) : (
+            <NavLink href="/admin/login" icon="shield" subtle>
+              Admin login
+            </NavLink>
+          )}
+        </nav>
+      </div>
+    </div>
   );
 }
 
 function NavLink({
   href,
+  icon,
   children,
+  description,
   highlight,
+  primary,
+  subtle,
 }: {
   href: string;
+  icon: IconName;
   children: React.ReactNode;
+  description?: string;
   highlight?: boolean;
+  primary?: boolean;
+  subtle?: boolean;
 }) {
+  let cls = "text-slate-800 hover:bg-slate-50";
+  if (highlight) cls = "bg-teal-50 text-teal-800 hover:bg-teal-100 ring-1 ring-teal-100";
+  else if (primary) cls = "bg-slate-900 text-white hover:bg-slate-800";
+  else if (subtle) cls = "text-slate-500 hover:bg-slate-50";
   return (
     <Link
       href={href}
-      className={
-        highlight
-          ? "px-3 py-2.5 rounded-lg bg-slate-900 text-white font-medium"
-          : "px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100"
-      }
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg my-0.5 transition-colors ${cls}`}
     >
-      {children}
+      <NavIcon name={icon} />
+      <span className="flex-1 leading-tight">
+        <span className="block font-medium">{children}</span>
+        {description && (
+          <span className="block text-[11px] text-slate-500 mt-0.5 font-normal">
+            {description}
+          </span>
+        )}
+      </span>
     </Link>
   );
+}
+
+function ActionButton({
+  onClick,
+  children,
+  tone,
+  icon,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  tone: "rose" | "slate";
+  icon: IconName;
+}) {
+  const cls =
+    tone === "rose"
+      ? "text-rose-600 hover:bg-rose-50"
+      : "text-slate-500 hover:bg-slate-50";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg my-0.5 text-left transition-colors ${cls}`}
+    >
+      <NavIcon name={icon} />
+      <span className="font-medium">{children}</span>
+    </button>
+  );
+}
+
+function Divider() {
+  return <div className="my-1 mx-3 h-px bg-slate-100" />;
+}
+
+type IconName =
+  | "grid"
+  | "message"
+  | "check"
+  | "login"
+  | "logout"
+  | "shield";
+
+function NavIcon({ name }: { name: IconName }) {
+  const common = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "h-4 w-4 shrink-0 opacity-80",
+  };
+  switch (name) {
+    case "grid":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      );
+    case "message":
+      return (
+        <svg {...common}>
+          <path d="M21 11.5a8.38 8.38 0 0 1-9 8.49 8.5 8.5 0 0 1-7.6-3.46L3 21l1.5-3.4A8.5 8.5 0 0 1 21 11.5z" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg {...common}>
+          <path d="M9 11l3 3 8-8" />
+          <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
+        </svg>
+      );
+    case "login":
+      return (
+        <svg {...common}>
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <polyline points="10 17 15 12 10 7" />
+          <line x1="15" y1="12" x2="3" y2="12" />
+        </svg>
+      );
+    case "logout":
+      return (
+        <svg {...common}>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg {...common}>
+          <path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z" />
+        </svg>
+      );
+  }
 }
