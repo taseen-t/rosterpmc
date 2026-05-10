@@ -71,8 +71,8 @@ export default async function HomePage() {
           {/* Authors credit */}
           <p className="mt-5 font-display text-[15px] md:text-[16px] text-teal-50/90">
             Built by{" "}
-            <span className="text-white font-semibold">Dr. Rabiya Tariq</span>
-            <span aria-hidden className="neon-x">&amp;</span>
+            <span className="text-white font-semibold">Dr. Rabiya Tariq</span>{" "}
+            &amp;{" "}
             <span className="text-white font-semibold">Mohammad Taseen Tariq</span>
           </p>
 
@@ -94,12 +94,6 @@ export default async function HomePage() {
             </SpringLink>
           </div>
 
-          <dl className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            <Stat label="Eligible students" value={passes.length.toString()} sub="passed Final Prof." />
-            <Stat label="Departments" value={matrix.length.toString()} sub="across 4 rotations" />
-            <Stat label="Annual seats" value={totalSeats.toString()} sub="all rotations combined" />
-            <Stat label="Filled" value={`${filledSeats}`} sub={`of ${totalSeats}`} accent />
-          </dl>
         </div>
       </section>
 
