@@ -9,12 +9,14 @@ import {
 import { getAllSelections } from "@/lib/selections";
 import { sql, ensureSchema } from "@/lib/db";
 import { getRecentAccessLog } from "@/lib/access";
+import { listAllCredentials } from "@/lib/credentials";
 import { CapacityEditor } from "./CapacityEditor";
 import { StudentEditor } from "./StudentEditor";
 import { AdminLogoutButton } from "./AdminLogoutButton";
 import { AddStudentForm } from "./AddStudentForm";
 import { SupportRequests } from "./SupportRequests";
 import { SessionsView } from "./SessionsView";
+import { CredentialsView } from "./CredentialsView";
 
 type SupportRow = {
   id: number;
@@ -32,7 +34,7 @@ export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
   await ensureSchema();
-  const [students, departments, selections, supportRows, accessRows] = await Promise.all([
+  const [students, departments, selections, supportRows, accessRows, credentials] = await Promise.all([
     getStudentsWithOverrides(),
     getDepartmentsWithOverrides(),
     getAllSelections(),
@@ -43,6 +45,7 @@ export default async function AdminPage() {
       LIMIT 200
     `,
     getRecentAccessLog(300),
+    listAllCredentials(),
   ]);
 
   const submittedRolls = new Set(selections.map((s) => s.roll_no));
@@ -163,6 +166,14 @@ export default async function AdminPage() {
             ]),
           )}
         />
+      </section>
+
+      <section>
+        <SectionHeader
+          title="Student credentials"
+          subtitle="One row per registered student. Each row appears here automatically the first time a student signs up. Edit a CNIC or display name when a student requests a correction. Delete a credential to release it for re-registration."
+        />
+        <CredentialsView rows={credentials} />
       </section>
 
       <section>

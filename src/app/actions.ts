@@ -16,11 +16,13 @@ import { submitSelections } from "@/lib/selections";
 import { sql, ensureSchema } from "@/lib/db";
 import { logAccess } from "@/lib/access";
 import {
+  deleteCredentials,
   findByCnic,
   findByRoll,
   normalizeCnic,
   registerStudent,
   touchLastSeen,
+  updateCredentials,
 } from "@/lib/credentials";
 import {
   ADMIN_RECIPIENT,
@@ -593,6 +595,44 @@ export async function adminDeleteSupport(id: number): Promise<{ error?: string }
   await requireAdmin();
   await ensureSchema();
   await sql`DELETE FROM support_requests WHERE id = ${id}`;
+  revalidatePath("/admin");
+  return {};
+}
+
+// ---------- Credentials (admin) ----------
+
+export async function adminUpdateCredential(input: {
+  roll_no: string;
+  cnic?: string;
+  display_name?: string;
+}): Promise<{ error?: string }> {
+  await requireAdmin();
+  const roll = input.roll_no.trim();
+  const patch: { cnic?: string; display_name?: string } = {};
+  if (input.cnic !== undefined) {
+    const cnic = normalizeCnic(input.cnic);
+    if (!cnic) return { error: "Enter a valid 13-digit CNIC." };
+    patch.cnic = cnic;
+  }
+  if (input.display_name !== undefined) {
+    const name = input.display_name.trim();
+    if (name.length < 1) return { error: "Display name can't be empty." };
+    if (name.length > 80) return { error: "Display name too long (max 80)." };
+    patch.display_name = name;
+  }
+  if (Object.keys(patch).length === 0) return {};
+  const result = await updateCredentials(roll, patch);
+  if (!result.ok) return { error: result.error ?? "Could not update." };
+  await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"credential-update"}, ${sql.json({ roll, patch })})`;
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return {};
+}
+
+export async function adminDeleteCredential(roll: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  await deleteCredentials(roll.trim());
+  await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"credential-delete"}, ${sql.json({ roll })})`;
   revalidatePath("/admin");
   return {};
 }
