@@ -175,7 +175,18 @@ export async function adminUpdateCapacity(name: string, capacity: number): Promi
 
 export async function adminUpdateStudent(
   roll: string,
-  patch: { name?: string; total?: number; overall?: "Pass" | "Fail"; rank?: number; hidden?: boolean },
+  patch: {
+    name?: string;
+    total?: number;
+    overall?: "Pass" | "Fail";
+    /**
+     * `number` = set rank override to this value.
+     * `null`   = explicitly clear the override (auto-rank by marks).
+     * `undefined` = don't change.
+     */
+    rank?: number | null;
+    hidden?: boolean;
+  },
 ): Promise<{ error?: string }> {
   await requireAdmin();
   await ensureSchema();
@@ -189,14 +200,18 @@ export async function adminUpdateStudent(
   const isOcr = Boolean(getStaticStudentByRoll(roll));
   if (!isManual && !isOcr) return { error: "Unknown roll number." };
 
-  // Behavior rule: when admin updates total marks (or pass/fail), the rank
-  // should auto-recompute from the new totals UNLESS the same call also
-  // sets an explicit rank override. So if total/overall changed and rank
-  // wasn't explicitly provided, clear any existing rank override so the
-  // data layer falls back to the computed rank.
+  // Rank override semantics:
+  // - patch.rank === null     → user explicitly cleared rank field;
+  //                              clear the override so auto-rank kicks in.
+  // - patch.total / overall changed without an explicit rank → also clear
+  //   the override (changing marks should always re-shuffle merit).
+  // - patch.rank is a number  → set override to that number.
+  // - patch.rank === undefined and total/overall unchanged → leave alone.
   const clearsRank =
-    (patch.total !== undefined || patch.overall !== undefined) &&
-    patch.rank === undefined;
+    patch.rank === null ||
+    ((patch.total !== undefined || patch.overall !== undefined) &&
+      patch.rank === undefined);
+  const rankToSet = typeof patch.rank === "number" ? patch.rank : null;
 
   if (isManual) {
     // Manual entries live in student_additions. Apply edits there directly,
@@ -214,7 +229,7 @@ export async function adminUpdateStudent(
     if (patch.rank !== undefined || patch.hidden !== undefined || clearsRank) {
       await sql`
         INSERT INTO student_overrides (roll_no, rank, hidden)
-        VALUES (${roll}, ${patch.rank ?? null}, ${patch.hidden ?? false})
+        VALUES (${roll}, ${rankToSet}, ${patch.hidden ?? false})
         ON CONFLICT (roll_no) DO UPDATE SET
           rank = ${
             clearsRank
@@ -232,7 +247,7 @@ export async function adminUpdateStudent(
         ${patch.name ?? null},
         ${patch.total ?? null},
         ${patch.overall ?? null},
-        ${patch.rank ?? null},
+        ${rankToSet},
         ${patch.hidden ?? false}
       )
       ON CONFLICT (roll_no) DO UPDATE SET

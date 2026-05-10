@@ -178,22 +178,31 @@ function StudentRow({
       original.total !== student.total ||
       original.overall !== student.overall ||
       original.rank !== student.rank);
+  // For manual entries (no `original`), we can still spot a rank-only
+  // override by checking whether the displayed rank diverges from the
+  // auto-rank. The data layer puts override.rank on top of auto-rank,
+  // so if a manual student's rank is non-sequential / mismatches their
+  // marks, an override exists. Easiest signal: just always offer Revert
+  // on a manual row — if there's no override row, the action is a no-op.
+  const canRevert = overridden || student.manual;
 
   const incomplete = !student.manual && (student.subjects.length < 4 || student.total == null);
 
   function save() {
-    // Only send fields that actually changed. This is important for the
-    // rank auto-update rule on the server: if total changed but rank
-    // didn't, the server clears any rank override so rank re-computes
-    // from the new total. If we always sent rank, that rule would never
-    // trigger.
+    // Only send fields that actually changed. Important for the rank
+    // auto-update rule: blanking the rank field sends rank: null which
+    // clears the override; not touching rank at all sends nothing.
     const totalNum = total === "" ? null : Number(total);
-    const rankNum = rank === "" ? null : Number(rank);
     const patch: Parameters<typeof adminUpdateStudent>[1] = {};
     if (name !== student.name) patch.name = name;
     if (totalNum !== student.total) patch.total = totalNum ?? undefined;
     if (overall !== student.overall) patch.overall = overall;
-    if (rankNum !== student.rank) patch.rank = rankNum ?? undefined;
+    if (rank === "" && student.rank != null) {
+      // Admin explicitly cleared the rank → clear the override.
+      patch.rank = null;
+    } else if (rank !== "" && Number(rank) !== student.rank) {
+      patch.rank = Number(rank);
+    }
     setError(null);
     if (Object.keys(patch).length === 0) {
       // Nothing changed — close the editor without making a no-op call.
@@ -287,12 +296,17 @@ function StudentRow({
     <tr className={incomplete ? "bg-amber-50/40" : "hover:bg-slate-50/60"}>
       <td className="px-3 py-2.5 font-mono text-slate-500">
         {editing ? (
-          <input
-            type="number"
-            value={rank}
-            onChange={(e) => setRank(e.target.value)}
-            className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm font-mono"
-          />
+          <div className="flex flex-col gap-0.5">
+            <input
+              type="number"
+              value={rank}
+              onChange={(e) => setRank(e.target.value)}
+              placeholder="auto"
+              className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm font-mono"
+              title="Leave blank to auto-rank by marks"
+            />
+            <span className="text-[9px] text-slate-400">blank = auto</span>
+          </div>
         ) : (
           student.rank ?? "-"
         )}
@@ -445,13 +459,17 @@ function StudentRow({
                 {student.skipped ? "Unskip" : "Skip"}
               </button>
             )}
-            {overridden && (
+            {canRevert && (
               <button
                 type="button"
                 onClick={revert}
                 disabled={pending}
                 className="px-2 py-1 rounded-md text-slate-500 hover:bg-slate-100 text-xs disabled:opacity-50"
-                title="Revert any name/total/rank edits back to the imported values"
+                title={
+                  student.manual
+                    ? "Clear any rank override (auto-rank by marks again)"
+                    : "Revert any name/total/rank edits back to the imported values"
+                }
               >
                 Revert
               </button>
