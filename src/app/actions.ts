@@ -253,6 +253,54 @@ export async function adminRemoveAddedStudent(roll: string): Promise<{ error?: s
   return {};
 }
 
+/**
+ * Hard-delete a student entry.
+ *  - Manually-added students: removed from student_additions.
+ *  - OCR-imported students: hidden flag set in student_overrides (the static
+ *    JSON file can't be mutated at runtime, so hiding is the equivalent of
+ *    deletion — they vanish from every list and metric).
+ * Either way: their submission, selections, Google link, support requests
+ * and access log entries are cleared so nothing about them remains.
+ */
+export async function adminDeleteEntry(roll: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+  const isManual =
+    (
+      await sql<{ roll_no: string }[]>`
+        SELECT roll_no FROM student_additions WHERE roll_no = ${roll}
+      `
+    ).length > 0;
+  const isOcr = Boolean(getStaticStudentByRoll(roll));
+  if (!isManual && !isOcr) return { error: "Unknown roll number." };
+
+  await sql.begin(async (tx) => {
+    await tx`DELETE FROM selections WHERE roll_no = ${roll}`;
+    await tx`DELETE FROM submissions WHERE roll_no = ${roll}`;
+    await tx`DELETE FROM google_links WHERE roll_no = ${roll}`;
+    await tx`DELETE FROM support_requests WHERE roll_no = ${roll}`;
+    await tx`DELETE FROM access_log WHERE roll_no = ${roll}`;
+    if (isManual) {
+      await tx`DELETE FROM student_additions WHERE roll_no = ${roll}`;
+      await tx`DELETE FROM student_overrides WHERE roll_no = ${roll}`;
+    } else {
+      // OCR student — flip hidden flag (or insert a hidden override).
+      await tx`
+        INSERT INTO student_overrides (roll_no, hidden)
+        VALUES (${roll}, TRUE)
+        ON CONFLICT (roll_no) DO UPDATE SET hidden = TRUE
+      `;
+    }
+    await tx`
+      INSERT INTO audit_log (actor, action, detail)
+      VALUES (${"admin"}, ${"delete-entry"}, ${tx.json({ roll, kind: isManual ? "manual" : "ocr" })})
+    `;
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {};
+}
+
 // ---------- Skip / unskip ----------
 
 export async function adminSkipStudent(roll: string, reason: string): Promise<{ error?: string }> {

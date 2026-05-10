@@ -8,7 +8,7 @@ import {
   adminResetStudent,
   adminSkipStudent,
   adminUnskipStudent,
-  adminRemoveAddedStudent,
+  adminDeleteEntry,
 } from "@/app/actions";
 import type { Student } from "@/lib/data";
 import { AccessLogDialog } from "./AccessLogDialog";
@@ -194,11 +194,28 @@ function StudentRow({
     });
   }
 
-  function reset() {
-    if (!confirm(`Reset ${student.name} (${student.roll_no})? This will delete their submitted selection.`))
+  function allowResubmit() {
+    if (
+      !confirm(
+        `Allow ${student.name} (Roll ${student.roll_no}) to submit again?\n\nTheir current four picks will be cleared. They can log back in and re-pick. (Their account, name, marks, and rank stay the same.)`,
+      )
+    )
       return;
     start(async () => {
       await adminResetStudent(student.roll_no);
+      router.refresh();
+    });
+  }
+
+  function deleteEntry() {
+    if (
+      !confirm(
+        `Permanently delete ${student.name} (Roll ${student.roll_no})?\n\nThis removes them from the roster, drops their picks, unlinks any Google account, and erases their access log. This cannot be undone.`,
+      )
+    )
+      return;
+    start(async () => {
+      await adminDeleteEntry(student.roll_no);
       router.refresh();
     });
   }
@@ -228,18 +245,6 @@ function StudentRow({
     });
   }
 
-  function removeManual() {
-    if (
-      !confirm(
-        `Remove ${student.name} (Roll ${student.roll_no}) entirely?\n\nThis only works for manually-added students. Their submitted picks (if any) will also be deleted.`,
-      )
-    )
-      return;
-    start(async () => {
-      await adminRemoveAddedStudent(student.roll_no);
-      router.refresh();
-    });
-  }
 
   return (
     <>
@@ -395,22 +400,13 @@ function StudentRow({
                 {student.skipped ? "Unskip" : "Skip"}
               </button>
             )}
-            {student.manual && (
-              <button
-                type="button"
-                onClick={removeManual}
-                disabled={pending}
-                className="px-2 py-1 rounded-md text-rose-600 hover:bg-rose-50 text-xs disabled:opacity-50"
-              >
-                Remove
-              </button>
-            )}
             {overridden && (
               <button
                 type="button"
                 onClick={revert}
                 disabled={pending}
                 className="px-2 py-1 rounded-md text-slate-500 hover:bg-slate-100 text-xs disabled:opacity-50"
+                title="Revert any name/total/rank edits back to the imported values"
               >
                 Revert
               </button>
@@ -418,13 +414,23 @@ function StudentRow({
             {submitted && (
               <button
                 type="button"
-                onClick={reset}
+                onClick={allowResubmit}
                 disabled={pending}
-                className="px-2 py-1 rounded-md text-rose-600 hover:bg-rose-50 text-xs disabled:opacity-50"
+                className="px-2 py-1 rounded-md text-amber-700 hover:bg-amber-50 text-xs disabled:opacity-50"
+                title="Clear their four picks so they can log back in and pick again"
               >
-                Reset
+                Allow re-submit
               </button>
             )}
+            <button
+              type="button"
+              onClick={deleteEntry}
+              disabled={pending}
+              className="px-2 py-1 rounded-md text-rose-600 hover:bg-rose-50 text-xs disabled:opacity-50"
+              title="Permanently delete this entry (removes from roster, picks, Google link, access log)"
+            >
+              Delete
+            </button>
           </>
         )}
       </td>
