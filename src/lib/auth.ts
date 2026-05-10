@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { getStaticStudentByRoll } from "./data";
 
 const COOKIE_NAME = "ho_session";
 const ADMIN_COOKIE = "ho_admin";
@@ -55,9 +54,12 @@ export async function getStudentSession(): Promise<Session | null> {
   if (!tok) return null;
   try {
     const { payload } = await jwtVerify(tok, getSecret());
-    if (typeof payload.roll === "string" && getStaticStudentByRoll(payload.roll)) {
-      return { roll: payload.roll };
-    }
+    // Trust the signed JWT for identity. We used to also gate this on the
+    // roll being in the static OCR list, but that locked out manually-added
+    // students (who only live in `student_additions`). Pages that need to
+    // confirm the roll is still in the active roster (e.g. /select) do that
+    // explicit lookup themselves and clear the cookie if it's gone.
+    if (typeof payload.roll === "string") return { roll: payload.roll };
     return null;
   } catch {
     return null;

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getStudentSession } from "@/lib/auth";
+import { clearStudentSession, getStudentSession } from "@/lib/auth";
 import { getStudentsWithOverrides } from "@/lib/data";
 import {
   getRankBlocker,
@@ -34,7 +34,14 @@ export default async function SelectPage() {
   ]);
 
   const me = students.find((s) => s.roll_no === session.roll);
-  if (!me) redirect("/login");
+  if (!me) {
+    // Stale cookie — the roll this token was minted for is no longer in
+    // the roster (admin removed them, or roster was wiped). Clear the
+    // cookie before redirecting so /login renders the form instead of
+    // bouncing back here on a still-valid JWT.
+    await clearStudentSession();
+    redirect("/login");
+  }
 
   await logAccess({
     roll_no: session.roll,
