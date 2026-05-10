@@ -168,6 +168,7 @@ function StudentRow({
   const [total, setTotal] = useState<string>(student.total?.toString() ?? "");
   const [overall, setOverall] = useState<"Pass" | "Fail">(student.overall);
   const [rank, setRank] = useState<string>(student.rank?.toString() ?? "");
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -193,10 +194,21 @@ function StudentRow({
     if (totalNum !== student.total) patch.total = totalNum ?? undefined;
     if (overall !== student.overall) patch.overall = overall;
     if (rankNum !== student.rank) patch.rank = rankNum ?? undefined;
+    setError(null);
+    if (Object.keys(patch).length === 0) {
+      // Nothing changed — close the editor without making a no-op call.
+      setEditing(false);
+      return;
+    }
     start(async () => {
       const r = await adminUpdateStudent(student.roll_no, patch);
+      if (r?.error) {
+        setError(r.error);
+        return;
+      }
       if (!r?.error) {
         setEditing(false);
+        setError(null);
         router.refresh();
       }
     });
@@ -468,6 +480,15 @@ function StudentRow({
         )}
       </td>
     </tr>
+    {error && (
+      <tr>
+        <td colSpan={7} className="px-3 pb-2 pt-0">
+          <div className="rounded-md bg-rose-50 ring-1 ring-rose-100 px-3 py-1.5 text-xs text-rose-700">
+            {error}
+          </div>
+        </td>
+      </tr>
+    )}
     {showAccess && (
       <AccessLogDialog
         roll={student.roll_no}

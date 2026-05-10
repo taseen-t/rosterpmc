@@ -164,7 +164,15 @@ export async function adminUpdateStudent(
 ): Promise<{ error?: string }> {
   await requireAdmin();
   await ensureSchema();
-  if (!getStaticStudentByRoll(roll)) return { error: "Unknown roll number." };
+
+  const isManual =
+    (
+      await sql<{ roll_no: string }[]>`
+        SELECT roll_no FROM student_additions WHERE roll_no = ${roll}
+      `
+    ).length > 0;
+  const isOcr = Boolean(getStaticStudentByRoll(roll));
+  if (!isManual && !isOcr) return { error: "Unknown roll number." };
 
   // Behavior rule: when admin updates total marks (or pass/fail), the rank
   // should auto-recompute from the new totals UNLESS the same call also
@@ -175,28 +183,56 @@ export async function adminUpdateStudent(
     (patch.total !== undefined || patch.overall !== undefined) &&
     patch.rank === undefined;
 
-  await sql`
-    INSERT INTO student_overrides (roll_no, name, total, overall, rank, hidden)
-    VALUES (
-      ${roll},
-      ${patch.name ?? null},
-      ${patch.total ?? null},
-      ${patch.overall ?? null},
-      ${patch.rank ?? null},
-      ${patch.hidden ?? false}
-    )
-    ON CONFLICT (roll_no) DO UPDATE SET
-      name = COALESCE(EXCLUDED.name, student_overrides.name),
-      total = COALESCE(EXCLUDED.total, student_overrides.total),
-      overall = COALESCE(EXCLUDED.overall, student_overrides.overall),
-      rank = ${
-        clearsRank
-          ? sql`NULL`
-          : sql`COALESCE(EXCLUDED.rank, student_overrides.rank)`
-      },
-      hidden = EXCLUDED.hidden
-  `;
-  await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"student-edit"}, ${sql.json({ roll, patch })})`;
+  if (isManual) {
+    // Manual entries live in student_additions. Apply edits there directly,
+    // because the data layer reads manual rows straight from that table.
+    if (patch.name !== undefined) {
+      await sql`UPDATE student_additions SET name = ${patch.name} WHERE roll_no = ${roll}`;
+    }
+    if (patch.total !== undefined) {
+      await sql`UPDATE student_additions SET total = ${patch.total} WHERE roll_no = ${roll}`;
+    }
+    // Manual entries are always Pass — there's no Fail concept for them.
+    // overall edits are ignored.
+    // Rank override + hidden flag still live in student_overrides because
+    // those don't fit into student_additions.
+    if (patch.rank !== undefined || patch.hidden !== undefined || clearsRank) {
+      await sql`
+        INSERT INTO student_overrides (roll_no, rank, hidden)
+        VALUES (${roll}, ${patch.rank ?? null}, ${patch.hidden ?? false})
+        ON CONFLICT (roll_no) DO UPDATE SET
+          rank = ${
+            clearsRank
+              ? sql`NULL`
+              : sql`COALESCE(EXCLUDED.rank, student_overrides.rank)`
+          },
+          hidden = EXCLUDED.hidden
+      `;
+    }
+  } else {
+    await sql`
+      INSERT INTO student_overrides (roll_no, name, total, overall, rank, hidden)
+      VALUES (
+        ${roll},
+        ${patch.name ?? null},
+        ${patch.total ?? null},
+        ${patch.overall ?? null},
+        ${patch.rank ?? null},
+        ${patch.hidden ?? false}
+      )
+      ON CONFLICT (roll_no) DO UPDATE SET
+        name = COALESCE(EXCLUDED.name, student_overrides.name),
+        total = COALESCE(EXCLUDED.total, student_overrides.total),
+        overall = COALESCE(EXCLUDED.overall, student_overrides.overall),
+        rank = ${
+          clearsRank
+            ? sql`NULL`
+            : sql`COALESCE(EXCLUDED.rank, student_overrides.rank)`
+        },
+        hidden = EXCLUDED.hidden
+    `;
+  }
+  await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"student-edit"}, ${sql.json({ roll, patch, isManual })})`;
   revalidatePath("/");
   revalidatePath("/admin");
   return {};
