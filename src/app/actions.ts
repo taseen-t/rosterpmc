@@ -35,36 +35,72 @@ export async function logout(): Promise<void> {
   redirect("/");
 }
 
+/** Loose comparison of a typed name vs. the roster name: lowercase, trim,
+ *  drop a leading "Dr." prefix, collapse whitespace. We don't allow looser
+ *  partial matches — spelling is the gate that keeps strangers out. */
+function nameMatchesRoster(input: string, target: string): boolean {
+  const norm = (s: string) =>
+    s
+      .trim()
+      .toLowerCase()
+      .replace(/^dr\.?\s+/i, "")
+      .replace(/\s+/g, " ");
+  return norm(input) === norm(target);
+}
+
 /**
- * First-time registration. Student types name + CNIC + roll. We bind the
- * CNIC to that roll permanently (CNIC will be the only thing they need to
- * type on subsequent logins).
+ * First-time registration. We don't *create* student records here — the
+ * student must already exist in the roster (OCR or admin-added). They prove
+ * who they are by typing matching name + roll + rank, then bind a CNIC to
+ * that roll. CNIC alone is the key on every subsequent login.
  */
 export async function studentSignUp(input: {
   name: string;
   cnic: string;
   roll: string;
+  rank: string;
 }): Promise<{ error?: string }> {
   const name = input.name.trim();
   const roll = input.roll.trim();
   const cnic = normalizeCnic(input.cnic);
+  const rank = Number.parseInt(input.rank.trim(), 10);
 
   if (name.length < 2) return { error: "Please enter your name." };
   if (name.length > 80) return { error: "Name is too long (max 80 chars)." };
   if (!cnic) return { error: "Enter a valid 13-digit CNIC." };
   if (!/^\d{4,8}$/.test(roll)) return { error: "Enter a valid roll number." };
+  if (!Number.isFinite(rank) || rank < 1) {
+    return { error: "Enter your merit rank (a positive number)." };
+  }
 
   const students = await getStudentsWithOverrides();
   const me = students.find((s) => s.roll_no === roll);
   if (!me) {
     await logAccess({ roll_no: roll, action: "login_fail_unknown" });
-    return { error: "Roll number not found in this year's batch." };
+    return {
+      error:
+        "We don't have anyone with that Proff Roll No on the roster. Double-check the number, or contact Support.",
+    };
   }
   if (me.overall !== "Pass") {
     await logAccess({ roll_no: roll, action: "login_fail_not_pass" });
     return {
       error:
         "Sorry - only candidates marked as Passed in the Final Professional MBBS result can sign in.",
+    };
+  }
+  if (!nameMatchesRoster(name, me.name)) {
+    await logAccess({ roll_no: roll, action: "login_fail_name_mismatch" });
+    return {
+      error:
+        "The name doesn't match what we have on file for that roll. Make sure you're using the exact name from the result.",
+    };
+  }
+  if (me.rank !== rank) {
+    await logAccess({ roll_no: roll, action: "login_fail_rank_mismatch" });
+    return {
+      error:
+        "That rank doesn't match the one we have for this roll. Check your merit number on the result and try again.",
     };
   }
 

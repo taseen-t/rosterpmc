@@ -107,6 +107,7 @@ function SignUpForm() {
   const [name, setName] = useState("");
   const [cnic, setCnic] = useState("");
   const [roll, setRoll] = useState("");
+  const [rank, setRank] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -114,7 +115,8 @@ function SignUpForm() {
   const ready =
     name.trim().length >= 2 &&
     cnicDigits === 13 &&
-    /^\d{4,8}$/.test(roll.trim());
+    /^\d{4,8}$/.test(roll.trim()) &&
+    /^\d{1,4}$/.test(rank.trim());
 
   return (
     <form
@@ -122,7 +124,7 @@ function SignUpForm() {
         e.preventDefault();
         setError(null);
         start(async () => {
-          const r = await studentSignUp({ name, cnic, roll });
+          const r = await studentSignUp({ name, cnic, roll, rank });
           if (r?.error) setError(r.error);
           else router.refresh();
         });
@@ -170,6 +172,20 @@ function SignUpForm() {
           value={roll}
           onChange={(e) => setRoll(e.target.value.replace(/\D/g, "").slice(0, 8))}
           placeholder="000000"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 font-mono tabular-nums focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+        />
+      </Field>
+
+      <Field label="Merit rank" hint="from the result PDF">
+        <input
+          name="rank"
+          inputMode="numeric"
+          autoComplete="off"
+          required
+          maxLength={4}
+          value={rank}
+          onChange={(e) => setRank(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          placeholder="0"
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 font-mono tabular-nums focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
         />
       </Field>

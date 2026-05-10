@@ -5,6 +5,8 @@ export type AccessAction =
   | "login_success"
   | "login_fail_unknown"
   | "login_fail_not_pass"
+  | "login_fail_name_mismatch"
+  | "login_fail_rank_mismatch"
   | "view_select"
   | "view_select_blocked"
   | "submit"
