@@ -181,13 +181,20 @@ function StudentRow({
   const incomplete = !student.manual && (student.subjects.length < 4 || student.total == null);
 
   function save() {
+    // Only send fields that actually changed. This is important for the
+    // rank auto-update rule on the server: if total changed but rank
+    // didn't, the server clears any rank override so rank re-computes
+    // from the new total. If we always sent rank, that rule would never
+    // trigger.
+    const totalNum = total === "" ? null : Number(total);
+    const rankNum = rank === "" ? null : Number(rank);
+    const patch: Parameters<typeof adminUpdateStudent>[1] = {};
+    if (name !== student.name) patch.name = name;
+    if (totalNum !== student.total) patch.total = totalNum ?? undefined;
+    if (overall !== student.overall) patch.overall = overall;
+    if (rankNum !== student.rank) patch.rank = rankNum ?? undefined;
     start(async () => {
-      const r = await adminUpdateStudent(student.roll_no, {
-        name: name !== student.name ? name : undefined,
-        total: total ? Number(total) : undefined,
-        overall: overall !== student.overall ? overall : undefined,
-        rank: rank ? Number(rank) : undefined,
-      });
+      const r = await adminUpdateStudent(student.roll_no, patch);
       if (!r?.error) {
         setEditing(false);
         router.refresh();

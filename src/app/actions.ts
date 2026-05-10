@@ -165,6 +165,16 @@ export async function adminUpdateStudent(
   await requireAdmin();
   await ensureSchema();
   if (!getStaticStudentByRoll(roll)) return { error: "Unknown roll number." };
+
+  // Behavior rule: when admin updates total marks (or pass/fail), the rank
+  // should auto-recompute from the new totals UNLESS the same call also
+  // sets an explicit rank override. So if total/overall changed and rank
+  // wasn't explicitly provided, clear any existing rank override so the
+  // data layer falls back to the computed rank.
+  const clearsRank =
+    (patch.total !== undefined || patch.overall !== undefined) &&
+    patch.rank === undefined;
+
   await sql`
     INSERT INTO student_overrides (roll_no, name, total, overall, rank, hidden)
     VALUES (
@@ -179,7 +189,11 @@ export async function adminUpdateStudent(
       name = COALESCE(EXCLUDED.name, student_overrides.name),
       total = COALESCE(EXCLUDED.total, student_overrides.total),
       overall = COALESCE(EXCLUDED.overall, student_overrides.overall),
-      rank = COALESCE(EXCLUDED.rank, student_overrides.rank),
+      rank = ${
+        clearsRank
+          ? sql`NULL`
+          : sql`COALESCE(EXCLUDED.rank, student_overrides.rank)`
+      },
       hidden = EXCLUDED.hidden
   `;
   await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"student-edit"}, ${sql.json({ roll, patch })})`;
