@@ -75,7 +75,7 @@ export function LinkRollForm({
           maxLength={15}
           value={cnic}
           onChange={(e) => setCnic(formatCnic(e.target.value))}
-          placeholder="33100-7303280-5"
+          placeholder="00000-0000000-0"
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 font-mono tabular-nums focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
         />
       </Field>

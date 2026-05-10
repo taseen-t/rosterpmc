@@ -4,7 +4,12 @@ import { getAllSelections, getSeatMatrix } from "@/lib/selections";
 import { classify, categoryStyle } from "@/lib/categories";
 import { SpringLink } from "@/components/SpringLink";
 
-export const dynamic = "force-dynamic";
+// ISR: revalidate the homepage at most every 15 seconds. Server actions
+// (submit picks, admin overrides, etc.) call revalidatePath('/') so the
+// public roster also refreshes the moment something changes — but in the
+// quiet stretches the page is served from the CDN cache, which is
+// dramatically faster than re-rendering on every visit.
+export const revalidate = 15;
 
 export default async function HomePage() {
   const [students, selections, matrix] = await Promise.all([
@@ -31,8 +36,28 @@ export default async function HomePage() {
   );
   const submittedRolls = new Set(selections.map((s) => s.roll_no));
 
+  const ldJson = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "House Job Roster · FMU",
+    url: "https://rosterpmc.vercel.app",
+    applicationCategory: "EducationalApplication",
+    operatingSystem: "Any",
+    description:
+      "Independent seat-selection portal for FMU House Officers (2026-27). Pick your four 3-month rotations live, by merit.",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "PKR" },
+    creator: [
+      { "@type": "Person", name: "Dr. Rabiya Tariq" },
+      { "@type": "Person", name: "Mohammad Taseen Tariq" },
+    ],
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-10 space-y-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ldJson) }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden rounded-[28px] border border-teal-900/10 shadow-[0_30px_60px_-30px_rgba(11,62,79,0.4)]">
         <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-800 to-navy-900" />
