@@ -83,8 +83,8 @@ export default async function RootLayout({
         <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-white/80 bg-white border-b border-slate-200/80">
           <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <span aria-hidden className="relative inline-flex h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-[0_2px_10px_-2px_rgba(11,62,79,0.45)] ring-1 ring-inset ring-white/20">
-                <svg viewBox="0 0 9 9" className="h-5 w-5 text-white" aria-hidden>
+              <span aria-hidden className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-[0_2px_10px_-2px_rgba(11,62,79,0.45)] ring-1 ring-inset ring-white/20">
+                <svg viewBox="-1 -1 11 11" className="block h-5 w-5 text-white" aria-hidden>
                   <path d="M 6.726 4.5 C 7.955 4.5 8.952 5.498 8.952 6.729 C 8.952 7.959 7.955 8.957 6.726 8.957 L 2.274 8.957 C 1.045 8.957 0.048 7.959 0.048 6.729 C 0.048 5.498 1.045 4.5 2.274 4.5 C 1.045 4.5 0.048 3.502 0.048 2.271 C 0.048 1.041 1.045 0.043 2.274 0.043 L 6.726 0.043 C 7.955 0.043 8.952 1.041 8.952 2.271 C 8.952 3.502 7.955 4.5 6.726 4.5 Z" fill="currentColor"/>
                 </svg>
               </span>
@@ -153,8 +153,8 @@ export default async function RootLayout({
           <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 grid sm:grid-cols-3 gap-6 text-sm">
             <div>
               <div className="flex items-center gap-2">
-                <span aria-hidden className="inline-flex h-7 w-7 rounded-lg bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center ring-1 ring-inset ring-white/15">
-                  <svg viewBox="0 0 9 9" className="h-4 w-4 text-white" aria-hidden>
+                <span aria-hidden className="h-7 w-7 rounded-lg bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center ring-1 ring-inset ring-white/15">
+                  <svg viewBox="-1 -1 11 11" className="block h-3.5 w-3.5 text-white" aria-hidden>
                     <path d="M 6.726 4.5 C 7.955 4.5 8.952 5.498 8.952 6.729 C 8.952 7.959 7.955 8.957 6.726 8.957 L 2.274 8.957 C 1.045 8.957 0.048 7.959 0.048 6.729 C 0.048 5.498 1.045 4.5 2.274 4.5 C 1.045 4.5 0.048 3.502 0.048 2.271 C 0.048 1.041 1.045 0.043 2.274 0.043 L 6.726 0.043 C 7.955 0.043 8.952 1.041 8.952 2.271 C 8.952 3.502 7.955 4.5 6.726 4.5 Z" fill="currentColor"/>
                   </svg>
                 </span>
