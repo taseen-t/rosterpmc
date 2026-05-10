@@ -221,9 +221,29 @@ export async function adminAddStudent(input: {
   if (input.medicine_marks != null && (input.medicine_marks < 0 || input.medicine_marks > 500))
     return { error: "Medicine marks must be between 0 and 500." };
 
-  // Reject if this roll already exists (in OCR data)
+  // If this roll exists in the OCR data, only reject if it's not currently
+  // hidden. A hidden OCR entry is the equivalent of "deleted" — admin
+  // should be able to re-claim that roll number for someone new. We
+  // *keep* the hidden=true override (so the original OCR record stays
+  // suppressed) and insert the new entry into student_additions
+  // alongside it. The data layer skips hidden OCR rows, so only the
+  // manual addition will show up.
   if (getStaticStudentByRoll(roll)) {
-    return { error: "That roll number is already in the OCR-imported list. Edit it via the table instead." };
+    const existing = await sql<{ hidden: boolean }[]>`
+      SELECT hidden FROM student_overrides WHERE roll_no = ${roll}
+    `;
+    const isHidden = existing[0]?.hidden === true;
+    if (!isHidden) {
+      return {
+        error:
+          "That roll number is already in the OCR-imported list. Edit it via the table instead, or Delete it first if you want to release the number.",
+      };
+    }
+    // Clear stale links / picks left over from the previous owner so the
+    // new entry gets a clean slate.
+    await sql`DELETE FROM google_links WHERE roll_no = ${roll}`;
+    await sql`DELETE FROM selections WHERE roll_no = ${roll}`;
+    await sql`DELETE FROM submissions WHERE roll_no = ${roll}`;
   }
 
   try {
