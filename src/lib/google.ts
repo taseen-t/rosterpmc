@@ -102,7 +102,16 @@ export async function consumeState(provided: string | null): Promise<boolean> {
 }
 
 export async function setGoogleSession(profile: GoogleProfile): Promise<void> {
-  const tok = await new SignJWT({
+  const tok = await mintGoogleToken(profile);
+  const c = await cookies();
+  c.set(GOOGLE_COOKIE, tok, googleCookieOptions());
+}
+
+/** Build the JWT for a Google session — exposed so route handlers can attach
+ *  the cookie directly to a NextResponse instead of relying on the implicit
+ *  cookies() helper, which can drop the Set-Cookie on redirect responses. */
+export async function mintGoogleToken(profile: GoogleProfile): Promise<string> {
+  return await new SignJWT({
     sub: profile.sub,
     email: profile.email,
     name: profile.name,
@@ -112,15 +121,25 @@ export async function setGoogleSession(profile: GoogleProfile): Promise<void> {
     .setIssuedAt()
     .setExpirationTime("30d")
     .sign(getSecret());
-  const c = await cookies();
-  c.set(GOOGLE_COOKIE, tok, {
+}
+
+export function googleCookieOptions(): {
+  httpOnly: true;
+  secure: boolean;
+  sameSite: "lax";
+  path: string;
+  maxAge: number;
+} {
+  return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
-  });
+  };
 }
+
+export const GOOGLE_COOKIE_NAME = GOOGLE_COOKIE;
 
 export async function getGoogleSession(): Promise<GoogleProfile | null> {
   const c = await cookies();

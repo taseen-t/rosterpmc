@@ -13,20 +13,36 @@ function getSecret(): Uint8Array {
 export type Session = { roll: string };
 
 export async function setStudentSession(roll: string) {
-  const token = await new SignJWT({ roll })
+  const token = await mintStudentToken(roll);
+  const c = await cookies();
+  c.set(COOKIE_NAME, token, studentCookieOptions());
+}
+
+export async function mintStudentToken(roll: string): Promise<string> {
+  return await new SignJWT({ roll })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(getSecret());
-  const c = await cookies();
-  c.set(COOKIE_NAME, token, {
+}
+
+export function studentCookieOptions(): {
+  httpOnly: true;
+  secure: boolean;
+  sameSite: "lax";
+  path: string;
+  maxAge: number;
+} {
+  return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
-  });
+  };
 }
+
+export const STUDENT_COOKIE_NAME = COOKIE_NAME;
 
 export async function clearStudentSession() {
   const c = await cookies();

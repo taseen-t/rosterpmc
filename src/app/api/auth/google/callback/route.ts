@@ -3,10 +3,16 @@ import {
   consumeState,
   exchangeCode,
   getLinkedRoll,
-  setGoogleSession,
   upsertGoogleProfile,
+  mintGoogleToken,
+  googleCookieOptions,
+  GOOGLE_COOKIE_NAME,
 } from "@/lib/google";
-import { setStudentSession } from "@/lib/auth";
+import {
+  mintStudentToken,
+  studentCookieOptions,
+  STUDENT_COOKIE_NAME,
+} from "@/lib/auth";
 import { getStudentsWithOverrides } from "@/lib/data";
 import { logAccess } from "@/lib/access";
 
@@ -31,7 +37,8 @@ export async function GET(req: NextRequest) {
   try {
     const profile = await exchangeCode(code);
     await upsertGoogleProfile(profile);
-    await setGoogleSession(profile);
+
+    const googleToken = await mintGoogleToken(profile);
 
     // If this Google account already has a roll linked AND that roll is a
     // valid passing student, log them in directly to /select.
@@ -40,17 +47,26 @@ export async function GET(req: NextRequest) {
       const students = await getStudentsWithOverrides();
       const me = students.find((s) => s.roll_no === linkedRoll);
       if (me && me.overall === "Pass") {
-        await setStudentSession(linkedRoll);
+        const studentToken = await mintStudentToken(linkedRoll);
         await logAccess({
           roll_no: linkedRoll,
           actor: profile.email,
           action: "login_success",
         });
-        return NextResponse.redirect(`${origin}/select`);
+        const res = NextResponse.redirect(`${origin}/select`);
+        // Set cookies *on the response* — the cookies() helper from
+        // next/headers can drop Set-Cookie on redirect responses, which is
+        // why some users were getting "session expired" on the very first
+        // form submit. Setting on NextResponse.cookies is bulletproof.
+        res.cookies.set(GOOGLE_COOKIE_NAME, googleToken, googleCookieOptions());
+        res.cookies.set(STUDENT_COOKIE_NAME, studentToken, studentCookieOptions());
+        return res;
       }
-      // Otherwise fall through to /link-roll so they can re-link.
     }
-    return NextResponse.redirect(`${origin}/link-roll`);
+
+    const res = NextResponse.redirect(`${origin}/link-roll`);
+    res.cookies.set(GOOGLE_COOKIE_NAME, googleToken, googleCookieOptions());
+    return res;
   } catch (e) {
     console.error("Google callback error", e);
     return NextResponse.redirect(`${origin}/login?err=oauth_failed`);
