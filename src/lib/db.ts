@@ -5,6 +5,7 @@ type Sql = ReturnType<typeof postgres>;
 declare global {
   var __sql: Sql | undefined;
   var __schemaPromise: Promise<void> | undefined;
+  var __schemaDone: boolean | undefined;
 }
 
 function makeSql(): Sql {
@@ -18,6 +19,11 @@ function makeSql(): Sql {
     max: 10,
     idle_timeout: 20,
     connect_timeout: 10,
+    // Hard cap on any single statement so a stuck migration can't wedge
+    // the whole process. 8 seconds is plenty for IF-NOT-EXISTS DDL on
+    // tables this size. `connection` is the postgres-js escape hatch for
+    // raw libpq/GUC params sent at startup.
+    connection: { statement_timeout: 8000 },
     prepare: false,
   });
 }
@@ -25,13 +31,15 @@ function makeSql(): Sql {
 export const sql: Sql = (globalThis.__sql ??= makeSql());
 
 async function runSchema() {
-  // Postgres has a known race on CREATE TABLE IF NOT EXISTS when concurrent
-  // connections target the same metadata row. Serialize with a session-level
-  // advisory lock so only one connection runs DDL at a time.
+  // Wrap everything in a transaction with a TRANSACTION-scoped advisory
+  // lock. That way the lock is auto-released the moment the transaction
+  // commits or rolls back — even if the function instance dies. Replaces
+  // an earlier session-scoped lock that could leak when postgres-js
+  // returned the connection to the pool without unlocking.
   const LOCK_KEY = 914829417;
-  await sql`SELECT pg_advisory_lock(${LOCK_KEY})`;
-  try {
-    await sql.unsafe(`
+  await sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(${LOCK_KEY})`;
+    await tx.unsafe(`
       CREATE TABLE IF NOT EXISTS selections (
         id              SERIAL PRIMARY KEY,
         roll_no         TEXT NOT NULL,
@@ -153,11 +161,18 @@ async function runSchema() {
       CREATE UNIQUE INDEX IF NOT EXISTS idx_creds_cnic
         ON student_credentials (cnic);
     `);
-  } finally {
-    await sql`SELECT pg_advisory_unlock(${LOCK_KEY})`;
-  }
+  });
+  globalThis.__schemaDone = true;
 }
 
 export function ensureSchema(): Promise<void> {
-  return (globalThis.__schemaPromise ??= runSchema());
+  // Fast-path once we know the schema's good in this instance — skips the
+  // round-trip to the lock manager on every request.
+  if (globalThis.__schemaDone) return Promise.resolve();
+  return (globalThis.__schemaPromise ??= runSchema().catch((err) => {
+    // Reset so the next request can retry instead of being permanently
+    // stuck on a one-time hiccup (e.g. cold-start statement timeout).
+    globalThis.__schemaPromise = undefined;
+    throw err;
+  }));
 }
