@@ -21,44 +21,38 @@ import {
   linkRollToGoogle,
 } from "@/lib/google";
 
-export async function loginStudent(formData: FormData): Promise<{ error?: string }> {
-  const roll = String(formData.get("roll") || "").trim();
-  if (!/^\d{4,8}$/.test(roll))
-    return { error: "Enter a valid roll number." };
-  const students = await getStudentsWithOverrides();
-  const me = students.find((s) => s.roll_no === roll);
-  if (!me) {
-    await logAccess({ roll_no: roll, action: "login_fail_unknown" });
-    return { error: "Roll number not found in this year's batch." };
-  }
-  if (me.overall !== "Pass") {
-    await logAccess({ roll_no: roll, actor: roll, action: "login_fail_not_pass" });
-    return {
-      error:
-        "Sorry - only candidates marked as Passed in the Final Professional MBBS result can log in.",
-    };
-  }
-  await logAccess({ roll_no: roll, actor: roll, action: "login_success" });
-  await setStudentSession(roll);
-  redirect("/select");
-}
-
 export async function logout(): Promise<void> {
   await clearStudentSession();
   redirect("/");
 }
 
-export async function linkRoll(roll: string): Promise<{ error?: string }> {
+export async function linkRoll(input: {
+  roll: string;
+  displayName: string;
+  cnic: string;
+}): Promise<{ error?: string }> {
   const google = await getGoogleSession();
   if (!google) return { error: "Sign in with Google first." };
-  const cleaned = roll.trim();
-  if (!/^\d{4,8}$/.test(cleaned)) return { error: "Enter a valid roll number." };
+
+  const roll = input.roll.trim();
+  const displayName = input.displayName.trim();
+  const cnic = input.cnic.trim();
+
+  if (!/^\d{4,8}$/.test(roll)) return { error: "Enter a valid roll number." };
+  if (displayName.length < 2) return { error: "Please enter your name." };
+  if (displayName.length > 80) return { error: "Name is too long (max 80 chars)." };
+  // CNIC must be 13 digits, optionally with two dashes (5-7-1 layout).
+  const cnicDigits = cnic.replace(/\D/g, "");
+  if (!/^\d{13}$/.test(cnicDigits)) {
+    return { error: "Enter a valid 13-digit CNIC." };
+  }
+  const cnicFormatted = `${cnicDigits.slice(0, 5)}-${cnicDigits.slice(5, 12)}-${cnicDigits.slice(12)}`;
 
   const students = await getStudentsWithOverrides();
-  const me = students.find((s) => s.roll_no === cleaned);
+  const me = students.find((s) => s.roll_no === roll);
   if (!me) {
     await logAccess({
-      roll_no: cleaned,
+      roll_no: roll,
       actor: google.email,
       action: "login_fail_unknown",
     });
@@ -66,7 +60,7 @@ export async function linkRoll(roll: string): Promise<{ error?: string }> {
   }
   if (me.overall !== "Pass") {
     await logAccess({
-      roll_no: cleaned,
+      roll_no: roll,
       actor: google.email,
       action: "login_fail_not_pass",
     });
@@ -76,12 +70,15 @@ export async function linkRoll(roll: string): Promise<{ error?: string }> {
     };
   }
 
-  const result = await linkRollToGoogle(google.email, cleaned);
+  const result = await linkRollToGoogle(google.email, roll, {
+    displayName,
+    cnic: cnicFormatted,
+  });
   if (!result.ok) return { error: result.error ?? "Could not link." };
 
-  await setStudentSession(cleaned);
+  await setStudentSession(roll);
   await logAccess({
-    roll_no: cleaned,
+    roll_no: roll,
     actor: google.email,
     action: "login_success",
   });
@@ -248,6 +245,99 @@ export async function adminRemoveAddedStudent(roll: string): Promise<{ error?: s
   await sql`DELETE FROM selections WHERE roll_no = ${roll}`;
   await sql`DELETE FROM submissions WHERE roll_no = ${roll}`;
   await sql`INSERT INTO audit_log (actor, action, detail) VALUES (${"admin"}, ${"remove-added-student"}, ${sql.json({ roll })})`;
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {};
+}
+
+/**
+ * Change the roll number of an existing entry. Migrates every related row
+ * (selections, submissions, google_links, support_requests, access_log,
+ * skipped_students, student_overrides, student_additions) from the old
+ * roll to the new one.
+ *
+ * For an OCR-imported student whose canonical roll lives in the static
+ * JSON file, the old roll is hidden via student_overrides (it can't be
+ * removed from the file at runtime) and a new manual entry is created
+ * with the new roll, copying over the visible name / total / rank.
+ */
+export async function adminChangeRoll(
+  oldRoll: string,
+  newRoll: string,
+): Promise<{ error?: string }> {
+  await requireAdmin();
+  await ensureSchema();
+
+  const oldR = oldRoll.trim();
+  const newR = newRoll.trim();
+  if (!/^\d{4,8}$/.test(newR)) return { error: "New roll must be 4-8 digits." };
+  if (oldR === newR) return { error: "Old and new rolls are the same." };
+
+  const isManual =
+    (
+      await sql<{ roll_no: string }[]>`
+        SELECT roll_no FROM student_additions WHERE roll_no = ${oldR}
+      `
+    ).length > 0;
+  const ocrSrc = getStaticStudentByRoll(oldR);
+
+  // Conflict check: new roll must not be already in use anywhere.
+  const conflictManual = await sql<{ roll_no: string }[]>`
+    SELECT roll_no FROM student_additions WHERE roll_no = ${newR}
+  `;
+  if (conflictManual.length || getStaticStudentByRoll(newR)) {
+    return { error: `Roll ${newR} is already in use by another student.` };
+  }
+
+  if (!isManual && !ocrSrc) return { error: "Old roll number not found." };
+
+  await sql.begin(async (tx) => {
+    if (isManual) {
+      // Just update the primary key in student_additions.
+      await tx`
+        UPDATE student_additions SET roll_no = ${newR} WHERE roll_no = ${oldR}
+      `;
+    } else if (ocrSrc) {
+      // Fold the OCR record + any existing override into a manual entry at
+      // the new roll, then hide the old.
+      const ovRows = await tx<{
+        name: string | null;
+        total: number | null;
+        rank: number | null;
+      }[]>`SELECT name, total, rank FROM student_overrides WHERE roll_no = ${oldR}`;
+      const ov = ovRows[0];
+      const name = ov?.name ?? ocrSrc.name;
+      const total = ov?.total ?? ocrSrc.total ?? null;
+      // Drop the "Dr " prefix the data layer adds at read time so we don't
+      // double-prefix when name is read back through getStudentsWithOverrides.
+      const cleanName = name?.replace(/^dr\.?\s+/i, "") ?? "Unknown";
+      await tx`
+        INSERT INTO student_additions (roll_no, name, total, medicine_marks)
+        VALUES (${newR}, ${cleanName}, ${total}, NULL)
+      `;
+      // Mark old roll as hidden so it disappears from the roster, and clear
+      // its rank override so it doesn't accidentally still rank somewhere.
+      await tx`
+        INSERT INTO student_overrides (roll_no, hidden)
+        VALUES (${oldR}, TRUE)
+        ON CONFLICT (roll_no) DO UPDATE SET hidden = TRUE
+      `;
+    }
+
+    // Migrate all foreign-key-ish references.
+    await tx`UPDATE selections SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+    await tx`UPDATE submissions SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+    await tx`UPDATE google_links SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+    await tx`UPDATE support_requests SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+    await tx`UPDATE access_log SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+    await tx`UPDATE skipped_students SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+
+    await tx`
+      INSERT INTO audit_log (actor, action, detail)
+      VALUES (${"admin"}, ${"change-roll"}, ${tx.json({ oldRoll: oldR, newRoll: newR, kind: isManual ? "manual" : "ocr" })})
+    `;
+  });
+
   revalidatePath("/");
   revalidatePath("/admin");
   return {};

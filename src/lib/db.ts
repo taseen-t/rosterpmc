@@ -125,10 +125,14 @@ async function runSchema() {
         google_name     TEXT,
         google_picture  TEXT,
         roll_no         TEXT,
+        display_name    TEXT,
+        cnic            TEXT,
         linked_at       TIMESTAMPTZ,
         first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      ALTER TABLE google_links ADD COLUMN IF NOT EXISTS display_name TEXT;
+      ALTER TABLE google_links ADD COLUMN IF NOT EXISTS cnic TEXT;
       CREATE UNIQUE INDEX IF NOT EXISTS idx_google_links_roll
         ON google_links (roll_no) WHERE roll_no IS NOT NULL;
     `);

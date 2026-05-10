@@ -9,6 +9,7 @@ import {
   adminSkipStudent,
   adminUnskipStudent,
   adminDeleteEntry,
+  adminChangeRoll,
 } from "@/app/actions";
 import type { Student } from "@/lib/data";
 import { AccessLogDialog } from "./AccessLogDialog";
@@ -207,6 +208,22 @@ function StudentRow({
     });
   }
 
+  function changeRoll() {
+    const next = prompt(
+      `Change roll number for ${student.name} (currently ${student.roll_no}).\n\nThis will migrate their selections, Google link, support tickets, and access log to the new roll. Cannot be undone.\n\nNew roll number:`,
+      student.roll_no,
+    );
+    if (!next || next.trim() === student.roll_no) return;
+    start(async () => {
+      const r = await adminChangeRoll(student.roll_no, next.trim());
+      if (r?.error) {
+        alert(r.error);
+      } else {
+        router.refresh();
+      }
+    });
+  }
+
   function deleteEntry() {
     if (
       !confirm(
@@ -380,6 +397,15 @@ function StudentRow({
               title="View access trail"
             >
               Access
+            </button>
+            <button
+              type="button"
+              onClick={changeRoll}
+              disabled={pending}
+              className="px-2 py-1 rounded-md text-slate-600 hover:bg-slate-100 text-xs disabled:opacity-50"
+              title="Change this student's roll number (migrates picks, Google link, etc.)"
+            >
+              Change roll
             </button>
             {student.overall === "Pass" && !submitted && (
               <button

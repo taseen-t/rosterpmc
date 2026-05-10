@@ -45,16 +45,16 @@ export default async function LinkRollPage() {
           </div>
         </div>
 
-        <h1 className="font-display h2-title text-ink-900">
-          Now enter your roll number
+        <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
+          Tell us who you are
         </h1>
-        <p className="mt-2 text-sm text-ink-600 leading-relaxed">
+        <p className="mt-2 text-sm text-slate-600 leading-relaxed">
           We&apos;ll link this Google account to your FMU roll number so you can
           select rotations. This link is permanent - choose carefully.
         </p>
 
         <div className="mt-6">
-          <LinkRollForm />
+          <LinkRollForm defaultName={google.name} />
         </div>
 
         <div className="mt-6 flex items-center justify-between text-xs">

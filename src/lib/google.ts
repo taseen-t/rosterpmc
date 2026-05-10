@@ -165,9 +165,12 @@ export async function getLinkedRoll(email: string): Promise<string | null> {
   return rows[0]?.roll_no ?? null;
 }
 
-export async function linkRollToGoogle(email: string, roll: string): Promise<{ ok: boolean; error?: string }> {
+export async function linkRollToGoogle(
+  email: string,
+  roll: string,
+  extras?: { displayName?: string; cnic?: string },
+): Promise<{ ok: boolean; error?: string }> {
   await ensureSchema();
-  // Make sure that roll isn't already linked to a different email
   const existing = await sql<{ google_email: string }[]>`
     SELECT google_email FROM google_links WHERE roll_no = ${roll}
   `;
@@ -179,8 +182,26 @@ export async function linkRollToGoogle(email: string, roll: string): Promise<{ o
   }
   await sql`
     UPDATE google_links
-       SET roll_no = ${roll}, linked_at = NOW(), last_seen_at = NOW()
+       SET roll_no = ${roll},
+           display_name = ${extras?.displayName ?? null},
+           cnic = ${extras?.cnic ?? null},
+           linked_at = NOW(),
+           last_seen_at = NOW()
      WHERE google_email = ${email}
   `;
   return { ok: true };
+}
+
+/** Returns the public display name a student set when they linked their Google account. */
+export async function getDisplayNamesByRoll(): Promise<Map<string, string>> {
+  await ensureSchema();
+  const rows = await sql<{ roll_no: string; display_name: string | null }[]>`
+    SELECT roll_no, display_name FROM google_links
+    WHERE roll_no IS NOT NULL AND display_name IS NOT NULL AND display_name <> ''
+  `;
+  const m = new Map<string, string>();
+  for (const r of rows) {
+    if (r.display_name) m.set(r.roll_no, r.display_name);
+  }
+  return m;
 }

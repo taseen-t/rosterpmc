@@ -2,14 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getStudentSession } from "@/lib/auth";
 import { getGoogleSession, googleConfigured } from "@/lib/google";
-import { LoginForm } from "./LoginForm";
 
-export const metadata = { title: "Login" };
+export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
 
 const ERR_MESSAGES: Record<string, string> = {
   google_not_configured:
-    "Google sign-in isn't configured on this deployment yet. Use a roll number below.",
+    "Google sign-in isn't set up on this deployment. Contact Support.",
   state_mismatch: "Sign-in expired or was tampered with. Try again.",
   missing_code: "Sign-in didn't return properly. Try again.",
   oauth_failed: "Sign-in failed. Please try again.",
@@ -35,7 +34,7 @@ export default async function LoginPage({
 
   return (
     <div className="mx-auto max-w-md px-4 md:px-6 py-12 md:py-20">
-      <div className="rounded-2xl border border-hairline bg-paper shadow-[0_30px_60px_-30px_rgba(15,15,15,0.18)] p-7 md:p-9">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-[0_30px_60px_-30px_rgba(11,62,79,0.18)] p-7 md:p-9">
         <div className="flex items-start gap-3 mb-7">
           <span aria-hidden className="h-11 w-11 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-sm ring-1 ring-inset ring-white/20">
             <svg viewBox="-1 -1 11 11" className="block h-5 w-5 text-white" aria-hidden>
@@ -43,14 +42,15 @@ export default async function LoginPage({
             </svg>
           </span>
           <div>
-            <p className="text-[11px] uppercase tracking-[0.16em] text-ink-700 font-semibold">
-              Sign in
+            <p className="text-[11px] uppercase tracking-[0.16em] text-teal-700 font-semibold">
+              Roster · Sign in
             </p>
-            <h1 className="mt-1 font-display h2-title text-ink-900">
+            <h1 className="mt-1 font-display text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
               Continue to your roster
             </h1>
-            <p className="text-sm text-ink-600 mt-0.5">
-              Verify with Google, then enter your roll number once.
+            <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+              Verify with Google. New here? You&apos;ll set your name, CNIC, and
+              roll number on the next step.
             </p>
           </div>
         </div>
@@ -61,13 +61,12 @@ export default async function LoginPage({
           </div>
         )}
 
-        {/* Google primary CTA */}
         <a
           href={enabled ? "/api/auth/google" : "#"}
           aria-disabled={!enabled}
-          className={`flex items-center justify-center gap-3 rounded-xl border border-hairline bg-paper px-4 py-3 text-[15px] font-medium text-ink-900 transition-colors ${
+          className={`flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-[15px] font-medium text-slate-900 transition-colors shadow-sm ${
             enabled
-              ? "hover:bg-cream"
+              ? "hover:bg-slate-50"
               : "opacity-50 cursor-not-allowed pointer-events-none"
           }`}
         >
@@ -77,40 +76,38 @@ export default async function LoginPage({
             <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.3 0-9.7-3.4-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
             <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C40.6 36 44 30.5 44 24c0-1.3-.1-2.3-.4-3.5z"/>
           </svg>
-          Continue with Google
+          Sign in or sign up with Google
         </a>
 
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 hr-fade" />
-          <span className="text-[10px] uppercase tracking-[0.18em] text-ink-400">
-            or
-          </span>
-          <div className="h-px flex-1 hr-fade" />
-        </div>
+        <hr className="my-6 border-0 h-px bg-slate-100" />
 
-        <div className="rounded-xl border border-dashed border-hairline px-4 py-4">
-          <p className="text-[13px] text-ink-700 mb-3">
-            Sign in with just your roll number (legacy mode):
-          </p>
-          <LoginForm />
-        </div>
-
-        <hr className="my-6 border-0 h-px hr-fade" />
-
-        <div className="space-y-2 text-xs text-ink-400 leading-relaxed">
-          <p>
-            Only candidates marked as{" "}
-            <span className="font-medium text-ink-700">Passed</span> in the Final
-            Professional MBBS Annual 2025 result can submit selections.
-          </p>
-          <p>
-            Roll number wrong? Reach out via{" "}
-            <Link href="/contact" className="text-ink-900 underline decoration-lime-500 underline-offset-4 decoration-2">
-              Contact Support
-            </Link>{" "}
-            and an admin will fix it.
-          </p>
-        </div>
+        <ul className="space-y-1.5 text-xs text-slate-500 leading-relaxed">
+          <li className="flex gap-2">
+            <span className="text-teal-600">•</span>
+            <span>
+              Only candidates marked as{" "}
+              <span className="font-medium text-slate-700">Passed</span> in the
+              Final Professional MBBS Annual 2025 result can sign in.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-teal-600">•</span>
+            <span>
+              Future logins go straight to your selection page. The Google account
+              you use here will be locked to your roll number.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="text-teal-600">•</span>
+            <span>
+              Roll number wrong or can&apos;t sign in?{" "}
+              <Link href="/contact" className="text-teal-700 hover:underline">
+                Contact Support
+              </Link>
+              .
+            </span>
+          </li>
+        </ul>
       </div>
     </div>
   );

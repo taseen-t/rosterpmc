@@ -82,7 +82,8 @@ export async function getDepartmentsWithOverrides(): Promise<Department[]> {
  */
 export async function getStudentsWithOverrides(): Promise<Student[]> {
   await ensureSchema();
-  const [overrides, additions, skipped] = await Promise.all([
+  const { getDisplayNamesByRoll } = await import("./google");
+  const [overrides, additions, skipped, displayNames] = await Promise.all([
     sql<{
       roll_no: string;
       name: string | null;
@@ -98,6 +99,7 @@ export async function getStudentsWithOverrides(): Promise<Student[]> {
       medicine_marks: number | null;
     }[]>`SELECT roll_no, name, total, medicine_marks FROM student_additions`,
     sql<{ roll_no: string }[]>`SELECT roll_no FROM skipped_students`,
+    getDisplayNamesByRoll(),
   ]);
 
   const ovMap = new Map(overrides.map((o) => [o.roll_no, o]));
@@ -179,10 +181,16 @@ export async function getStudentsWithOverrides(): Promise<Student[]> {
     if (ov?.rank != null) {
       s.rank = ov.rank;
     }
-    // Display: graduating MBBS doctors get the "Dr" honorific. Apply at the
-    // data layer so every consumer (homepage roster, admin panel, Excel
-    // export, OG card) shows the same prefixed name. Pass-only — Fails
-    // aren't doctors yet.
+    // Priority for the displayed name:
+    //   1. Admin override (student_overrides.name)
+    //   2. Public display name the student set when linking their Google
+    //      account (google_links.display_name)
+    //   3. Canonical name from the xlsx / OCR data
+    // Then prefix "Dr" for Pass students (dedup-safe).
+    const userDisplay = displayNames.get(s.roll_no);
+    if (!ov?.name && userDisplay) {
+      s.name = userDisplay;
+    }
     if (s.overall === "Pass") {
       s.name = withDr(s.name);
     }
