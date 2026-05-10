@@ -115,26 +115,15 @@ async function runSchema() {
       CREATE INDEX IF NOT EXISTS idx_access_log_roll ON access_log (roll_no, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_access_log_recent ON access_log (created_at DESC);
 
-      -- Google OAuth: link a Google identity to a roll number. The same
-      -- email cannot link to two rolls; the same roll can be linked to
-      -- exactly one Google email at a time. Admin can unlink to allow
-      -- relinking.
+      -- google_links was the previous OAuth-based auth scheme. We've moved
+      -- to CNIC-based credentials below, so just leave any existing
+      -- google_links rows alone (don't read them, don't create new ones).
+      -- The CREATE IF NOT EXISTS keeps old deployments compatible.
       CREATE TABLE IF NOT EXISTS google_links (
         google_email    TEXT PRIMARY KEY,
-        google_sub      TEXT,
-        google_name     TEXT,
-        google_picture  TEXT,
         roll_no         TEXT,
-        display_name    TEXT,
-        cnic            TEXT,
-        linked_at       TIMESTAMPTZ,
-        first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
-      ALTER TABLE google_links ADD COLUMN IF NOT EXISTS display_name TEXT;
-      ALTER TABLE google_links ADD COLUMN IF NOT EXISTS cnic TEXT;
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_google_links_roll
-        ON google_links (roll_no) WHERE roll_no IS NOT NULL;
 
       -- Lightweight notifications: students get pinged when their support
       -- request is resolved; admin recipient is the literal string '@admin'
@@ -151,6 +140,18 @@ async function runSchema() {
       );
       CREATE INDEX IF NOT EXISTS idx_notif_recipient
         ON notifications (recipient, read, created_at DESC);
+
+      -- CNIC-based credentials. The student types (name, CNIC, roll) the
+      -- first time, and on every login after that just types CNIC.
+      CREATE TABLE IF NOT EXISTS student_credentials (
+        roll_no         TEXT PRIMARY KEY,
+        cnic            TEXT NOT NULL,
+        display_name    TEXT,
+        registered_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_creds_cnic
+        ON student_credentials (cnic);
     `);
   } finally {
     await sql`SELECT pg_advisory_unlock(${LOCK_KEY})`;

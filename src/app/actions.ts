@@ -16,10 +16,12 @@ import { submitSelections } from "@/lib/selections";
 import { sql, ensureSchema } from "@/lib/db";
 import { logAccess } from "@/lib/access";
 import {
-  clearGoogleSession,
-  getGoogleSession,
-  linkRollToGoogle,
-} from "@/lib/google";
+  findByCnic,
+  findByRoll,
+  normalizeCnic,
+  registerStudent,
+  touchLastSeen,
+} from "@/lib/credentials";
 import {
   ADMIN_RECIPIENT,
   markNotificationsRead,
@@ -31,74 +33,87 @@ export async function logout(): Promise<void> {
   redirect("/");
 }
 
-export async function linkRoll(input: {
-  roll: string;
-  displayName: string;
+/**
+ * First-time registration. Student types name + CNIC + roll. We bind the
+ * CNIC to that roll permanently (CNIC will be the only thing they need to
+ * type on subsequent logins).
+ */
+export async function studentSignUp(input: {
+  name: string;
   cnic: string;
+  roll: string;
 }): Promise<{ error?: string }> {
-  const google = await getGoogleSession();
-  if (!google) {
-    // Session evaporated between page render and form submit — bfcache,
-    // session-secret change, cookie expired, etc. Send the user back to
-    // /login to start fresh rather than showing a dead-end error.
-    redirect("/login?err=session_expired");
-  }
-
+  const name = input.name.trim();
   const roll = input.roll.trim();
-  const displayName = input.displayName.trim();
-  const cnic = input.cnic.trim();
+  const cnic = normalizeCnic(input.cnic);
 
+  if (name.length < 2) return { error: "Please enter your name." };
+  if (name.length > 80) return { error: "Name is too long (max 80 chars)." };
+  if (!cnic) return { error: "Enter a valid 13-digit CNIC." };
   if (!/^\d{4,8}$/.test(roll)) return { error: "Enter a valid roll number." };
-  if (displayName.length < 2) return { error: "Please enter your name." };
-  if (displayName.length > 80) return { error: "Name is too long (max 80 chars)." };
-  // CNIC must be 13 digits, optionally with two dashes (5-7-1 layout).
-  const cnicDigits = cnic.replace(/\D/g, "");
-  if (!/^\d{13}$/.test(cnicDigits)) {
-    return { error: "Enter a valid 13-digit CNIC." };
-  }
-  const cnicFormatted = `${cnicDigits.slice(0, 5)}-${cnicDigits.slice(5, 12)}-${cnicDigits.slice(12)}`;
 
   const students = await getStudentsWithOverrides();
   const me = students.find((s) => s.roll_no === roll);
   if (!me) {
-    await logAccess({
-      roll_no: roll,
-      actor: google.email,
-      action: "login_fail_unknown",
-    });
+    await logAccess({ roll_no: roll, action: "login_fail_unknown" });
     return { error: "Roll number not found in this year's batch." };
   }
   if (me.overall !== "Pass") {
-    await logAccess({
-      roll_no: roll,
-      actor: google.email,
-      action: "login_fail_not_pass",
-    });
+    await logAccess({ roll_no: roll, action: "login_fail_not_pass" });
     return {
       error:
         "Sorry - only candidates marked as Passed in the Final Professional MBBS result can sign in.",
     };
   }
 
-  const result = await linkRollToGoogle(google.email, roll, {
-    displayName,
-    cnic: cnicFormatted,
-  });
-  if (!result.ok) return { error: result.error ?? "Could not link." };
+  const result = await registerStudent({ roll, cnic, name });
+  if (!result.ok) return { error: result.error ?? "Could not register." };
 
   await setStudentSession(roll);
-  await logAccess({
-    roll_no: roll,
-    actor: google.email,
-    action: "login_success",
-  });
+  await logAccess({ roll_no: roll, actor: roll, action: "login_success" });
   redirect("/select");
 }
 
-export async function googleLogout(): Promise<void> {
-  await clearGoogleSession();
-  await clearStudentSession();
-  redirect("/login");
+/**
+ * Subsequent login: just CNIC. Looks up the registered roll and signs them in.
+ */
+export async function studentSignIn(input: {
+  cnic: string;
+}): Promise<{ error?: string }> {
+  const cnic = normalizeCnic(input.cnic);
+  if (!cnic) return { error: "Enter a valid 13-digit CNIC." };
+
+  const creds = await findByCnic(cnic);
+  if (!creds) {
+    return {
+      error:
+        "We don't have a record for that CNIC. If this is your first time, register below.",
+    };
+  }
+
+  // Sanity-check that the roll is still in the roster and Pass.
+  const students = await getStudentsWithOverrides();
+  const me = students.find((s) => s.roll_no === creds.roll_no);
+  if (!me || me.overall !== "Pass") {
+    await logAccess({
+      roll_no: creds.roll_no,
+      actor: creds.cnic,
+      action: "login_fail_not_pass",
+    });
+    return {
+      error:
+        "Your account is no longer eligible. Contact Support if this is unexpected.",
+    };
+  }
+
+  await touchLastSeen(creds.roll_no);
+  await setStudentSession(creds.roll_no);
+  await logAccess({
+    roll_no: creds.roll_no,
+    actor: creds.cnic,
+    action: "login_success",
+  });
+  redirect("/select");
 }
 
 export async function loginAdmin(formData: FormData): Promise<{ error?: string }> {
@@ -296,7 +311,7 @@ export async function adminAddStudent(input: {
     }
     // Clear stale links / picks left over from the previous owner so the
     // new entry gets a clean slate.
-    await sql`DELETE FROM google_links WHERE roll_no = ${roll}`;
+    await sql`DELETE FROM student_credentials WHERE roll_no = ${roll}`;
     await sql`DELETE FROM selections WHERE roll_no = ${roll}`;
     await sql`DELETE FROM submissions WHERE roll_no = ${roll}`;
   }
@@ -332,7 +347,7 @@ export async function adminRemoveAddedStudent(roll: string): Promise<{ error?: s
 
 /**
  * Change the roll number of an existing entry. Migrates every related row
- * (selections, submissions, google_links, support_requests, access_log,
+ * (selections, submissions, student_credentials, support_requests, access_log,
  * skipped_students, student_overrides, student_additions) from the old
  * roll to the new one.
  *
@@ -407,7 +422,7 @@ export async function adminChangeRoll(
     // Migrate all foreign-key-ish references.
     await tx`UPDATE selections SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
     await tx`UPDATE submissions SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
-    await tx`UPDATE google_links SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
+    await tx`UPDATE student_credentials SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
     await tx`UPDATE support_requests SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
     await tx`UPDATE access_log SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
     await tx`UPDATE skipped_students SET roll_no = ${newR} WHERE roll_no = ${oldR}`;
@@ -447,7 +462,7 @@ export async function adminDeleteEntry(roll: string): Promise<{ error?: string }
   await sql.begin(async (tx) => {
     await tx`DELETE FROM selections WHERE roll_no = ${roll}`;
     await tx`DELETE FROM submissions WHERE roll_no = ${roll}`;
-    await tx`DELETE FROM google_links WHERE roll_no = ${roll}`;
+    await tx`DELETE FROM student_credentials WHERE roll_no = ${roll}`;
     await tx`DELETE FROM support_requests WHERE roll_no = ${roll}`;
     await tx`DELETE FROM access_log WHERE roll_no = ${roll}`;
     if (isManual) {

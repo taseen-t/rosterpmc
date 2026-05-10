@@ -12,7 +12,6 @@ export async function GET(req: NextRequest) {
   const cookies = req.cookies.getAll().map((c) => c.name);
   return NextResponse.json({
     cookieNames: cookies,
-    hasGoogleSession: cookies.includes("ho_google"),
     hasStudentSession: cookies.includes("ho_session"),
     hasAdminSession: cookies.includes("ho_admin"),
     userAgent: req.headers.get("user-agent"),

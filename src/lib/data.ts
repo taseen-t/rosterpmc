@@ -86,7 +86,7 @@ export async function getDepartmentsWithOverrides(): Promise<Department[]> {
  */
 export async function getStudentsWithOverrides(): Promise<Student[]> {
   await ensureSchema();
-  const { getDisplayNamesByRoll } = await import("./google");
+  const { getDisplayNamesByRoll } = await import("./credentials");
   const [overrides, additions, skipped, displayNames] = await Promise.all([
     sql<{
       roll_no: string;

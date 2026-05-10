@@ -229,7 +229,7 @@ function StudentRow({
 
   function changeRoll() {
     const next = prompt(
-      `Change roll number for ${student.name} (currently ${student.roll_no}).\n\nThis will migrate their selections, Google link, support tickets, and access log to the new roll. Cannot be undone.\n\nNew roll number:`,
+      `Change roll number for ${student.name} (currently ${student.roll_no}).\n\nThis will migrate their selections, credential link, support tickets, and access log to the new roll. Cannot be undone.\n\nNew roll number:`,
       student.roll_no,
     );
     if (!next || next.trim() === student.roll_no) return;
@@ -422,7 +422,7 @@ function StudentRow({
               onClick={changeRoll}
               disabled={pending}
               className="px-2 py-1 rounded-md text-slate-600 hover:bg-slate-100 text-xs disabled:opacity-50"
-              title="Change this student's roll number (migrates picks, Google link, etc.)"
+              title="Change this student's roll number (migrates picks, credential link, etc.)"
             >
               Change roll
             </button>
@@ -472,7 +472,7 @@ function StudentRow({
               onClick={deleteEntry}
               disabled={pending}
               className="px-2 py-1 rounded-md text-rose-600 hover:bg-rose-50 text-xs disabled:opacity-50"
-              title="Permanently delete this entry (removes from roster, picks, Google link, access log)"
+              title="Permanently delete this entry (removes from roster, picks, credential link, access log)"
             >
               Delete
             </button>
