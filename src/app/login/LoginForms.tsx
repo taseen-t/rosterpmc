@@ -160,7 +160,7 @@ function SignUpForm() {
         />
       </Field>
 
-      <Field label="Prof Roll No" hint="starting from 255___">
+      <Field label="Proff Roll No" hint="starting from 255___">
         <input
           name="roll"
           inputMode="numeric"
