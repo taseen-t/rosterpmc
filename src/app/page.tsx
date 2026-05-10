@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getStudentsWithOverrides } from "@/lib/data";
 import { getAllSelections, getSeatMatrix } from "@/lib/selections";
 import { classify, categoryStyle } from "@/lib/categories";
+import { SpringLink } from "@/components/SpringLink";
 
 export const dynamic = "force-dynamic";
 
@@ -70,13 +71,13 @@ export default async function HomePage() {
           {/* Authors credit */}
           <p className="mt-5 font-display text-[15px] md:text-[16px] text-teal-50/90">
             Built by{" "}
-            <span className="text-white font-semibold">Dr Rabiya Tariq</span>
-            <span aria-hidden className="neon-x">×</span>
+            <span className="text-white font-semibold">Dr. Rabiya Tariq</span>
+            <span aria-hidden className="neon-x">&amp;</span>
             <span className="text-white font-semibold">Mohammad Taseen Tariq</span>
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link
+            <SpringLink
               href="/login"
               className="inline-flex items-center gap-2 rounded-xl bg-white text-teal-800 px-5 py-3 font-medium hover:bg-teal-50 transition-colors shadow-[0_10px_30px_-10px_rgba(255,255,255,0.4)]"
             >
@@ -84,13 +85,13 @@ export default async function HomePage() {
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
-            </Link>
-            <a
+            </SpringLink>
+            <SpringLink
               href="#roster"
               className="inline-flex items-center gap-2 rounded-xl bg-transparent ring-1 ring-white/25 hover:bg-white/10 text-white px-5 py-3 font-medium transition-colors"
             >
               View roster
-            </a>
+            </SpringLink>
           </div>
 
           <dl className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

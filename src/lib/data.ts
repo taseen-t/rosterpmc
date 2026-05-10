@@ -3,14 +3,18 @@ import departmentsRaw from "../../data/departments.json";
 import { sql, ensureSchema } from "./db";
 
 /**
- * Prefix "Dr " to a name when displayed publicly. They're MBBS graduates,
+ * Prefix "Dr. " to a name when displayed publicly. They're MBBS graduates,
  * so the title applies. Dedup-safe (won't double up if a record already
- * starts with "Dr").
+ * starts with "Dr" or "Dr.").
  */
 export function withDr(name: string | null | undefined): string {
   if (!name) return "";
-  if (/^dr\.?\s/i.test(name.trim())) return name.trim();
-  return `Dr ${name.trim()}`;
+  const trimmed = name.trim();
+  if (/^dr\.?\s/i.test(trimmed)) {
+    // Already has "Dr" or "Dr." prefix — normalize to "Dr." form.
+    return trimmed.replace(/^dr\.?\s+/i, "Dr. ");
+  }
+  return `Dr. ${trimmed}`;
 }
 
 export type Subject = {
