@@ -13,6 +13,8 @@ const ERR_MESSAGES: Record<string, string> = {
   missing_code: "Sign-in didn't return properly. Try again.",
   oauth_failed: "Sign-in failed. Please try again.",
   access_denied: "You denied the Google sign-in.",
+  session_expired:
+    "Your sign-in expired. Sign in with Google again to continue.",
 };
 
 export default async function LoginPage({

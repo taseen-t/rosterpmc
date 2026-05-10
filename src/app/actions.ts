@@ -32,7 +32,12 @@ export async function linkRoll(input: {
   cnic: string;
 }): Promise<{ error?: string }> {
   const google = await getGoogleSession();
-  if (!google) return { error: "Sign in with Google first." };
+  if (!google) {
+    // Session evaporated between page render and form submit — bfcache,
+    // session-secret change, cookie expired, etc. Send the user back to
+    // /login to start fresh rather than showing a dead-end error.
+    redirect("/login?err=session_expired");
+  }
 
   const roll = input.roll.trim();
   const displayName = input.displayName.trim();

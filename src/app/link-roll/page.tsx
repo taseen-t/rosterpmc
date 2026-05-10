@@ -7,6 +7,10 @@ import { LinkRollForm } from "./LinkRollForm";
 
 export const metadata = { title: "Link your roll number" };
 export const dynamic = "force-dynamic";
+// Disable any caching of this page — we never want the browser to bfcache
+// a "looks logged in" snapshot that's actually stale.
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 export default async function LinkRollPage() {
   const [google, student] = await Promise.all([
