@@ -135,6 +135,22 @@ async function runSchema() {
       ALTER TABLE google_links ADD COLUMN IF NOT EXISTS cnic TEXT;
       CREATE UNIQUE INDEX IF NOT EXISTS idx_google_links_roll
         ON google_links (roll_no) WHERE roll_no IS NOT NULL;
+
+      -- Lightweight notifications: students get pinged when their support
+      -- request is resolved; admin recipient is the literal string '@admin'
+      -- and any logged-in admin sees those.
+      CREATE TABLE IF NOT EXISTS notifications (
+        id              SERIAL PRIMARY KEY,
+        recipient       TEXT NOT NULL,
+        kind            TEXT NOT NULL,
+        title           TEXT NOT NULL,
+        body            TEXT,
+        link            TEXT,
+        read            BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_notif_recipient
+        ON notifications (recipient, read, created_at DESC);
     `);
   } finally {
     await sql`SELECT pg_advisory_unlock(${LOCK_KEY})`;

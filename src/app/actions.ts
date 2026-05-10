@@ -20,6 +20,11 @@ import {
   getGoogleSession,
   linkRollToGoogle,
 } from "@/lib/google";
+import {
+  ADMIN_RECIPIENT,
+  markNotificationsRead,
+  pushNotification,
+} from "@/lib/notifications";
 
 export async function logout(): Promise<void> {
   await clearStudentSession();
@@ -462,6 +467,17 @@ export async function submitSupportRequest(input: {
       ${message}
     )
   `;
+  // Notify admin that a new ticket exists.
+  await pushNotification({
+    recipient: ADMIN_RECIPIENT,
+    kind: "new_support_request",
+    title: input.roll_no
+      ? `New support ticket from Roll ${input.roll_no.trim()}`
+      : "New support ticket",
+    body:
+      message.length > 140 ? message.slice(0, 140).trim() + "…" : message,
+    link: "/admin#support-requests",
+  });
   revalidatePath("/admin");
   return {};
 }
@@ -469,7 +485,26 @@ export async function submitSupportRequest(input: {
 export async function adminResolveSupport(id: number, resolved: boolean): Promise<{ error?: string }> {
   await requireAdmin();
   await ensureSchema();
+  // Read the request first so we can notify the original sender by roll #.
+  const rows = await sql<{ roll_no: string | null; message: string }[]>`
+    SELECT roll_no, message FROM support_requests WHERE id = ${id}
+  `;
   await sql`UPDATE support_requests SET resolved = ${resolved} WHERE id = ${id}`;
+  const req = rows[0];
+  if (req?.roll_no) {
+    await pushNotification({
+      recipient: req.roll_no,
+      kind: resolved ? "support_resolved" : "support_reopened",
+      title: resolved
+        ? "Your support request was resolved"
+        : "Your support request is open again",
+      body:
+        req.message.length > 120
+          ? req.message.slice(0, 120).trim() + "…"
+          : req.message,
+      link: "/contact",
+    });
+  }
   revalidatePath("/admin");
   return {};
 }
@@ -479,5 +514,24 @@ export async function adminDeleteSupport(id: number): Promise<{ error?: string }
   await ensureSchema();
   await sql`DELETE FROM support_requests WHERE id = ${id}`;
   revalidatePath("/admin");
+  return {};
+}
+
+// ---------- Notifications ----------
+
+export async function markMyNotificationsRead(ids?: number[]): Promise<{ error?: string }> {
+  // Caller can be either a student OR an admin; route to the right
+  // recipient bucket so admins don't accidentally mark a student's
+  // notifications and vice versa.
+  if (await isAdmin()) {
+    await markNotificationsRead(ADMIN_RECIPIENT, ids);
+    revalidatePath("/admin");
+    return {};
+  }
+  const session = await getStudentSession();
+  if (!session) return { error: "Not signed in." };
+  await markNotificationsRead(session.roll, ids);
+  revalidatePath("/select");
+  revalidatePath("/contact");
   return {};
 }

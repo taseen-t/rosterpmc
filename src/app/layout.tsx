@@ -5,6 +5,8 @@ import "./globals.css";
 import { getStudentSession, isAdmin } from "@/lib/auth";
 import { LogoutButton } from "@/components/LogoutButton";
 import { MobileNav } from "@/components/MobileNav";
+import { NotificationBell } from "@/components/NotificationBell";
+import { ADMIN_RECIPIENT, getNotifications } from "@/lib/notifications";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,6 +76,24 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const [session, admin] = await Promise.all([getStudentSession(), isAdmin()]);
 
+  // Load notifications best-effort. If the DB hiccups, the bell just doesn't
+  // render — we don't want a header to crash the whole shell. Student and
+  // admin notifications are tracked separately, so fetch each one when the
+  // matching session is active.
+  type Notifs = Awaited<ReturnType<typeof getNotifications>>;
+  const safeFetch = async (recipient: string | null): Promise<Notifs | null> => {
+    if (!recipient) return null;
+    try {
+      return await getNotifications(recipient);
+    } catch {
+      return null;
+    }
+  };
+  const [studentNotifs, adminNotifs] = await Promise.all([
+    safeFetch(session?.roll ?? null),
+    safeFetch(admin ? ADMIN_RECIPIENT : null),
+  ]);
+
   return (
     <html
       lang="en"
@@ -83,8 +103,8 @@ export default async function RootLayout({
         <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-white/80 bg-white border-b border-slate-200/80">
           <div className="mx-auto max-w-6xl px-4 md:px-6 h-16 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <span aria-hidden className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-[0_2px_10px_-2px_rgba(11,62,79,0.45)] ring-1 ring-inset ring-white/20">
-                <svg viewBox="-1 -1 11 11" className="block h-5 w-5 text-white" aria-hidden>
+              <span aria-hidden className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 via-teal-600 to-navy-800 grid place-items-center shadow-[0_2px_10px_-2px_rgba(11,62,79,0.45)] ring-1 ring-inset ring-white/20 shrink-0">
+                <svg viewBox="-2 -2 13 13" className="block h-6 w-6 text-white" aria-hidden preserveAspectRatio="xMidYMid meet">
                   <path d="M 6.726 4.5 C 7.955 4.5 8.952 5.498 8.952 6.729 C 8.952 7.959 7.955 8.957 6.726 8.957 L 2.274 8.957 C 1.045 8.957 0.048 7.959 0.048 6.729 C 0.048 5.498 1.045 4.5 2.274 4.5 C 1.045 4.5 0.048 3.502 0.048 2.271 C 0.048 1.041 1.045 0.043 2.274 0.043 L 6.726 0.043 C 7.955 0.043 8.952 1.041 8.952 2.271 C 8.952 3.502 7.955 4.5 6.726 4.5 Z" fill="currentColor"/>
                 </svg>
               </span>
@@ -117,6 +137,13 @@ export default async function RootLayout({
                   <Link href="/select" className="px-3 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors">
                     My Selection
                   </Link>
+                  {studentNotifs && (
+                    <NotificationBell
+                      initialItems={studentNotifs.items}
+                      initialUnread={studentNotifs.unread}
+                      variant="student"
+                    />
+                  )}
                   <span className="hidden lg:inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 text-[11px] font-mono text-slate-600">
                     <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
                     {session.roll}
@@ -130,6 +157,13 @@ export default async function RootLayout({
                 >
                   Login
                 </Link>
+              )}
+              {admin && adminNotifs && (
+                <NotificationBell
+                  initialItems={adminNotifs.items}
+                  initialUnread={adminNotifs.unread}
+                  variant="student"
+                />
               )}
               <Link
                 href={admin ? "/admin" : "/admin/login"}
