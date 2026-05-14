@@ -46,25 +46,23 @@ export function AddStudentForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 text-sm font-medium shadow-sm"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--accent)] text-sm font-medium transition-colors"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Add new student
+        <span className="text-base leading-none">+</span> Add new student
       </button>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-      <div className="flex items-start justify-between gap-3 mb-4">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-6">
+      <div className="flex items-start justify-between gap-3 mb-5">
         <div>
-          <h3 className="font-display text-lg font-semibold text-slate-900">
-            Add new student
+          <p className="eyebrow-accent">New entry</p>
+          <h3 className="mt-1 font-display text-xl font-semibold text-[var(--foreground)]">
+            Add a student
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            For students missing from the OCR-imported PDF. They&apos;ll be re-ranked
+          <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+            For students missing from the imported result. They&apos;re re-ranked
             against the rest by total marks.
           </p>
         </div>
@@ -74,22 +72,22 @@ export function AddStudentForm() {
             reset();
             setOpen(false);
           }}
-          className="text-xs text-slate-500 hover:text-slate-700"
+          className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
         >
           Cancel
         </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Roll number" required>
           <input
             type="text"
             inputMode="numeric"
             value={roll}
             onChange={(e) => setRoll(e.target.value)}
-            placeholder="e.g. 255326"
+            placeholder="000000"
             maxLength={8}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+            className="w-full rounded-md border border-[var(--border-strong)] px-3 py-2.5 text-sm font-mono-label focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
           />
         </Field>
         <Field label="Full name" required>
@@ -98,7 +96,7 @@ export function AddStudentForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Hina Anwar"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+            className="w-full rounded-md border border-[var(--border-strong)] px-3 py-2.5 text-sm focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
           />
         </Field>
         <Field label="Total marks (out of 1500)">
@@ -108,13 +106,13 @@ export function AddStudentForm() {
             max={1500}
             value={total}
             onChange={(e) => setTotal(e.target.value)}
-            placeholder="e.g. 1180"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+            placeholder="1180"
+            className="w-full rounded-md border border-[var(--border-strong)] px-3 py-2.5 text-sm font-mono-label focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
           />
         </Field>
         <Field
-          label="Medicine marks (tiebreaker)"
-          hint="Used when totals tie. Optional."
+          label="Medicine marks"
+          hint="Used as tiebreaker. Optional."
         >
           <input
             type="number"
@@ -122,19 +120,19 @@ export function AddStudentForm() {
             max={500}
             value={med}
             onChange={(e) => setMed(e.target.value)}
-            placeholder="e.g. 380"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+            placeholder="380"
+            className="w-full rounded-md border border-[var(--border-strong)] px-3 py-2.5 text-sm font-mono-label focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
           />
         </Field>
       </div>
 
       {error && (
-        <div className="mt-3 rounded-lg bg-rose-50 ring-1 ring-rose-100 px-3 py-2 text-sm text-rose-700">
+        <div className="mt-4 rounded-md bg-[var(--rose-soft)] border border-[var(--rose)]/30 px-3 py-2 text-sm text-[var(--rose)]">
           {error}
         </div>
       )}
 
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"
           onClick={() => {
@@ -142,7 +140,7 @@ export function AddStudentForm() {
             setOpen(false);
           }}
           disabled={pending}
-          className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm disabled:opacity-50"
+          className="px-4 py-2 rounded-md border border-[var(--border-strong)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--foreground)] text-sm disabled:opacity-50 transition-colors"
         >
           Cancel
         </button>
@@ -150,7 +148,7 @@ export function AddStudentForm() {
           type="button"
           onClick={submit}
           disabled={pending || !roll || !name}
-          className="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm disabled:bg-slate-300 disabled:cursor-not-allowed"
+          className="px-5 py-2 rounded-md bg-[var(--foreground)] hover:bg-[var(--accent)] text-[var(--background)] text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {pending ? "Adding…" : "Add student"}
         </button>
@@ -173,11 +171,11 @@ function Field({
   return (
     <label className="block">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-medium text-slate-700">
+        <span className="eyebrow">
           {label}
-          {required && <span className="text-rose-500 ml-0.5">*</span>}
+          {required && <span className="text-[var(--rose)] ml-0.5">*</span>}
         </span>
-        {hint && <span className="text-[10px] text-slate-400">{hint}</span>}
+        {hint && <span className="text-[10px] text-[var(--muted-foreground)]">{hint}</span>}
       </div>
       {children}
     </label>

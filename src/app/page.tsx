@@ -2,13 +2,10 @@ import Link from "next/link";
 import { getStudentsWithOverrides } from "@/lib/data";
 import { getAllSelections, getSeatMatrix } from "@/lib/selections";
 import { classify, categoryStyle } from "@/lib/categories";
-import { SpringLink } from "@/components/SpringLink";
 
 // ISR: revalidate the homepage at most every 15 seconds. Server actions
-// (submit picks, admin overrides, etc.) call revalidatePath('/') so the
-// public roster also refreshes the moment something changes — but in the
-// quiet stretches the page is served from the CDN cache, which is
-// dramatically faster than re-rendering on every visit.
+// (admin edits, finalization) call revalidatePath('/') so changes show up
+// immediately; the cache otherwise serves the page fast from the CDN.
 export const revalidate = 15;
 
 export default async function HomePage() {
@@ -18,6 +15,9 @@ export default async function HomePage() {
     getSeatMatrix(),
   ]);
 
+  // Group picks by roll. Only students with ALL FOUR rotations assigned
+  // are eligible to appear in the public roster — the admin's draft work
+  // stays private until they finalize.
   const selByRoll = new Map<string, Map<number, string>>();
   for (const s of selections) {
     if (!selByRoll.has(s.roll_no)) selByRoll.set(s.roll_no, new Map());
@@ -29,12 +29,16 @@ export default async function HomePage() {
     .filter((s) => s.rank != null)
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 
+  const fullyAssigned = passesRanked.filter((s) => {
+    const m = selByRoll.get(s.roll_no);
+    return m && m.size === 4;
+  });
+
   const totalSeats = matrix.reduce((acc, m) => acc + m.capacity * 4, 0);
   const filledSeats = matrix.reduce(
     (acc, m) => acc + m.byRotation.reduce((a, r) => a + r.filled, 0),
     0,
   );
-  const submittedRolls = new Set(selections.map((s) => s.roll_no));
 
   const ldJson = {
     "@context": "https://schema.org",
@@ -44,8 +48,7 @@ export default async function HomePage() {
     applicationCategory: "EducationalApplication",
     operatingSystem: "Any",
     description:
-      "Independent seat-selection portal for FMU House Officers (2026-27). Pick your four 3-month rotations live, by merit.",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "PKR" },
+      "Independent allocation portal for FMU House Officers (2026-27). Four three-month rotations, assigned by merit, published transparently.",
     creator: [
       { "@type": "Person", name: "Dr. Rabiya Tariq" },
       { "@type": "Person", name: "Mohammad Taseen Tariq" },
@@ -53,145 +56,134 @@ export default async function HomePage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-10 space-y-12">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ldJson) }}
       />
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-[28px] border border-teal-900/10 shadow-[0_30px_60px_-30px_rgba(11,62,79,0.4)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-800 to-navy-900" />
-        <div className="absolute inset-0 bg-rx opacity-90" />
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-teal-300/15 blur-3xl" />
-        <div className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-navy-700/30 blur-3xl" />
 
-        <div className="relative px-6 md:px-10 py-10 md:py-14 text-white">
-          <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-teal-100/80">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 ring-1 ring-white/15 px-3 py-1">
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300 text-emerald-300 live-dot" aria-hidden />
-              Live Selection
-            </span>
-            <span className="opacity-70">·</span>
-            <span>FMU House Officers · 2026-27</span>
-            <span className="opacity-70">·</span>
-            <span className="text-teal-200/70 normal-case tracking-normal">Unofficial portal</span>
-          </div>
-
-          <h1 className="mt-5 max-w-3xl">
-            <span className="block font-display text-4xl md:text-[56px] font-semibold leading-[1.04] tracking-tight">
-              House Officer
-              <span className="text-teal-200"> seat selection</span>,
-              <br className="hidden md:block" />
-              live and merit-ordered.
-            </span>
+      {/* ─── Hero ───────────────────────────────────────────────────── */}
+      <section className="relative">
+        <div className="mx-auto max-w-3xl px-6 md:px-8 pt-24 md:pt-32 pb-20 md:pb-28 text-center">
+          <p className="eyebrow-accent">House Officers · 2026 – 2027</p>
+          <h1 className="mt-6 font-display text-[44px] sm:text-6xl md:text-7xl font-normal text-[var(--foreground)] tracking-[-0.02em] leading-[1.05]">
+            The roster,
+            <br />
+            <span className="italic text-[var(--accent)]">composed</span> by merit.
           </h1>
-
-          <p className="mt-4 max-w-2xl text-[15px] md:text-base text-teal-50/85 leading-relaxed">
-            FMU graduates of the 2025 Final Professional batch choose their four
-            three-month rotations through this portal. Seats are first-come-first-served
-            within capacity. Once submitted, picks are final &mdash; only an admin can
-            reset them.
+          <p className="mt-8 mx-auto max-w-2xl text-[17px] md:text-lg text-[var(--muted-foreground)] leading-[1.75]">
+            An independent allocation record for the Final Professional MBBS
+            class of 2025 — four three-month rotations, assigned and finalized by
+            the admin team, published here as they&apos;re confirmed.
           </p>
 
-          {/* Authors credit */}
-          <p className="mt-5 font-display text-[15px] md:text-[16px] text-teal-50/90">
-            Built by{" "}
-            <span className="text-white font-semibold">Dr. Rabiya Tariq</span>{" "}
-            &amp;{" "}
-            <span className="text-white font-semibold">Mohammad Taseen Tariq</span>
-          </p>
-
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <SpringLink
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-white text-teal-800 px-5 py-3 font-medium hover:bg-teal-50 transition-colors shadow-[0_10px_30px_-10px_rgba(255,255,255,0.4)]"
-            >
-              Begin selection
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </SpringLink>
-            <SpringLink
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <Link
               href="#roster"
-              className="inline-flex items-center gap-2 rounded-xl bg-transparent ring-1 ring-white/25 hover:bg-white/10 text-white px-5 py-3 font-medium transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--accent)] transition-all duration-200 font-medium text-sm"
             >
-              View roster
-            </SpringLink>
+              View the roster
+              <span aria-hidden>↓</span>
+            </Link>
           </div>
 
+          <p className="mt-12 font-display text-base italic text-[var(--muted-foreground)]">
+            Built by{" "}
+            <span className="text-[var(--foreground)] not-italic font-semibold">
+              Dr. Rabiya Tariq
+            </span>{" "}
+            &amp;{" "}
+            <span className="text-[var(--foreground)] not-italic font-semibold">
+              Mohammad Taseen Tariq
+            </span>
+          </p>
+        </div>
+
+        {/* Decorative rule below hero */}
+        <div className="mx-auto max-w-5xl px-6 md:px-8">
+          <div className="hairline" />
         </div>
       </section>
 
-      {/* Status strip */}
-      <section className="grid sm:grid-cols-3 gap-3 -mt-2">
-        <StatusCard
-          tone="teal"
-          icon="clock"
-          title="Selection window"
-          desc="Open. Closes when all eligible students submit, or per admin notice."
-        />
-        <StatusCard
-          tone="emerald"
-          icon="check"
-          title={`${submittedRolls.size} submitted`}
-          desc={`${passes.length - submittedRolls.size} remaining of eligible batch`}
-        />
-        <StatusCard
-          tone="amber"
-          icon="alert"
-          title="Final on submit"
-          desc="Department changes require an admin reset."
-        />
+      {/* ─── Status numbers ─────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-6 md:px-8 py-20 md:py-24">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--border)] border border-[var(--border)] rounded-lg overflow-hidden">
+          <BigStat label="Eligible candidates" value={passes.length.toString()} />
+          <BigStat label="Finalized rosters" value={fullyAssigned.length.toString()} />
+          <BigStat
+            label="Seats filled"
+            value={`${filledSeats} / ${totalSeats}`}
+          />
+          <BigStat label="Rotations / yr" value="4" />
+        </div>
       </section>
 
-      {/* Seat matrix */}
-      <section>
-        <SectionHeader
-          eyebrow="Live Seats"
-          title="Seat matrix"
-          subtitle="Filled vs. available seats per department per rotation. Updates instantly as students submit."
-        />
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      {/* ─── Seat matrix ────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-6 md:px-8 py-12">
+        <RuleLabel>Live seat matrix</RuleLabel>
+        <h2 className="mt-6 font-display text-3xl md:text-[40px] font-semibold text-[var(--foreground)] tracking-tight">
+          Department occupancy
+        </h2>
+        <p className="mt-3 max-w-2xl text-[var(--muted-foreground)] leading-relaxed">
+          Filled and available seats per department, per three-month rotation.
+          Updates immediately when the admin saves a placement.
+        </p>
+
+        <div className="mt-10 rounded-lg border border-[var(--border)] bg-[var(--card)] overflow-hidden">
           <div className="scrollx">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50/80 text-slate-500 text-[11px] uppercase tracking-[0.12em]">
+              <thead className="bg-[var(--muted)] text-[var(--muted-foreground)] eyebrow">
                 <tr>
-                  <th className="text-left px-5 py-3 font-medium">Department</th>
-                  <th className="text-center px-3 py-3 font-medium">Cap.</th>
-                  <th className="text-center px-3 py-3 font-medium">
-                    R1 <span className="text-[10px] block font-normal text-slate-400">Jun to Aug</span>
+                  <th className="text-left px-5 py-4 font-normal">Department</th>
+                  <th className="text-center px-3 py-4 font-normal">Cap.</th>
+                  <th className="text-center px-3 py-4 font-normal">
+                    R1
+                    <span className="block text-[9px] opacity-60 mt-0.5 normal-case tracking-wide">
+                      Jun – Aug
+                    </span>
                   </th>
-                  <th className="text-center px-3 py-3 font-medium">
-                    R2 <span className="text-[10px] block font-normal text-slate-400">Sep to Nov</span>
+                  <th className="text-center px-3 py-4 font-normal">
+                    R2
+                    <span className="block text-[9px] opacity-60 mt-0.5 normal-case tracking-wide">
+                      Sep – Nov
+                    </span>
                   </th>
-                  <th className="text-center px-3 py-3 font-medium">
-                    R3 <span className="text-[10px] block font-normal text-slate-400">Dec to Feb</span>
+                  <th className="text-center px-3 py-4 font-normal">
+                    R3
+                    <span className="block text-[9px] opacity-60 mt-0.5 normal-case tracking-wide">
+                      Dec – Feb
+                    </span>
                   </th>
-                  <th className="text-center px-3 py-3 font-medium">
-                    R4 <span className="text-[10px] block font-normal text-slate-400">Mar to May</span>
+                  <th className="text-center px-3 py-4 font-normal">
+                    R4
+                    <span className="block text-[9px] opacity-60 mt-0.5 normal-case tracking-wide">
+                      Mar – May
+                    </span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[var(--border)]">
                 {matrix.map((m) => {
                   const cat = classify(m.name);
                   const style = categoryStyle[cat];
                   return (
-                    <tr key={m.name} className="group hover:bg-slate-50/60 transition-colors">
-                      <td className="px-0 py-2.5">
+                    <tr key={m.name} className="hover:bg-[var(--muted)]/40 transition-colors">
+                      <td className="px-0 py-3.5">
                         <div className="flex items-stretch">
-                          <span aria-hidden className={`w-1 ${style.bar} rounded-r-sm`} />
-                          <div className="pl-4 pr-3 py-0.5 flex flex-col">
-                            <span className="font-medium text-slate-800">{m.name}</span>
-                            <span className={`mt-0.5 inline-flex items-center self-start px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider ring-1 ${style.chip}`}>
+                          <span aria-hidden className={`w-1 ${style.bar}`} />
+                          <div className="pl-5 pr-3 py-0.5 flex flex-col">
+                            <span className="text-[var(--foreground)]">{m.name}</span>
+                            <span className="eyebrow mt-1 text-[9px]">
                               {style.label}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="text-center px-3 py-2.5 text-slate-500 font-mono tabular-nums">{m.capacity}</td>
+                      <td className="text-center px-3 py-3.5 text-[var(--muted-foreground)] font-mono-label tabular-nums">
+                        {m.capacity}
+                      </td>
                       {m.byRotation.map((r) => (
-                        <td key={r.rotation} className="text-center px-3 py-2.5">
+                        <td key={r.rotation} className="text-center px-3 py-3.5">
                           <SeatBadge filled={r.filled} capacity={m.capacity} />
                         </td>
                       ))}
@@ -206,179 +198,118 @@ export default async function HomePage() {
         <Legend />
       </section>
 
-      {/* Roster (no roll number column on the public view) */}
-      <section id="roster">
-        <SectionHeader
-          eyebrow="Public Roster"
-          title="Allocations by merit"
-          subtitle="Every passed candidate ranked by total marks, with their submitted rotations. Empty cells mean the student has not yet selected."
-        />
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      {/* ─── Public roster ──────────────────────────────────────────── */}
+      <section id="roster" className="mx-auto max-w-5xl px-6 md:px-8 py-20 md:py-24">
+        <RuleLabel>Public roster</RuleLabel>
+        <h2 className="mt-6 font-display text-3xl md:text-[40px] font-semibold text-[var(--foreground)] tracking-tight">
+          Allocations by merit
+        </h2>
+        <p className="mt-3 max-w-2xl text-[var(--muted-foreground)] leading-relaxed">
+          Students whose four rotations have been confirmed appear below in
+          merit order. Drafts and partial assignments are kept private until the
+          admin finalizes all four placements.
+        </p>
+
+        <div className="mt-10 rounded-lg border border-[var(--border)] bg-[var(--card)] overflow-hidden">
           <div className="scrollx">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50/80 text-slate-500 text-[11px] uppercase tracking-[0.12em]">
+              <thead className="bg-[var(--muted)] text-[var(--muted-foreground)] eyebrow">
                 <tr>
-                  <th className="text-left px-3 py-3 font-medium">Rank</th>
-                  <th className="text-left px-3 py-3 font-medium">Name</th>
-                  <th className="text-right px-3 py-3 font-medium">Marks</th>
-                  <th className="text-left px-3 py-3 font-medium">R1</th>
-                  <th className="text-left px-3 py-3 font-medium">R2</th>
-                  <th className="text-left px-3 py-3 font-medium">R3</th>
-                  <th className="text-left px-3 py-3 font-medium">R4</th>
+                  <th className="text-left px-4 py-4 font-normal">Rank</th>
+                  <th className="text-left px-4 py-4 font-normal">Name</th>
+                  <th className="text-right px-4 py-4 font-normal">Marks</th>
+                  <th className="text-left px-4 py-4 font-normal">R1</th>
+                  <th className="text-left px-4 py-4 font-normal">R2</th>
+                  <th className="text-left px-4 py-4 font-normal">R3</th>
+                  <th className="text-left px-4 py-4 font-normal">R4</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {passesRanked.map((s) => {
-                  const rotMap = selByRoll.get(s.roll_no);
+              <tbody className="divide-y divide-[var(--border)]">
+                {fullyAssigned.map((s) => {
+                  const rotMap = selByRoll.get(s.roll_no)!;
                   const isTop3 = (s.rank ?? 999) <= 3;
                   return (
-                    <tr key={s.roll_no} className="group hover:bg-slate-50/60 transition-colors">
-                      <td className="px-3 py-2.5">
+                    <tr key={s.roll_no} className="hover:bg-[var(--muted)]/40 transition-colors">
+                      <td className="px-4 py-3.5">
                         <span
                           className={
                             isTop3
-                              ? "inline-flex items-center justify-center w-7 h-6 rounded-md bg-amber-50 text-amber-800 font-mono text-xs ring-1 ring-amber-100"
-                              : "text-slate-500 font-mono text-xs"
+                              ? "inline-flex items-center justify-center w-8 h-7 rounded-md border border-[var(--accent)]/60 bg-[var(--accent-muted)]/40 text-[var(--accent)] font-mono-label text-xs tabular-nums"
+                              : "text-[var(--muted-foreground)] font-mono-label text-xs tabular-nums"
                           }
                         >
                           {s.rank}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-slate-900">{s.name}</td>
-                      <td className="px-3 py-2.5 text-right text-slate-600 font-mono tabular-nums">
-                        {s.total ?? "-"}
+                      <td className="px-4 py-3.5 text-[var(--foreground)]">
+                        {s.name}
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-[var(--muted-foreground)] font-mono-label tabular-nums">
+                        {s.total ?? "—"}
                       </td>
                       {[1, 2, 3, 4].map((r) => (
-                        <td key={r} className="px-3 py-2.5">
-                          {rotMap?.get(r) ? (
-                            <DeptChip name={rotMap.get(r)!} />
-                          ) : (
-                            <span className="text-slate-300">-</span>
-                          )}
+                        <td key={r} className="px-4 py-3.5">
+                          <DeptChip name={rotMap.get(r)!} />
                         </td>
                       ))}
                     </tr>
                   );
                 })}
+                {fullyAssigned.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-16 text-center text-[var(--muted-foreground)]"
+                    >
+                      No rosters published yet. Students whose four rotations
+                      are confirmed by the admin will appear here in merit
+                      order.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
+
+        <p className="mt-6 text-xs text-[var(--muted-foreground)] leading-relaxed max-w-2xl">
+          For corrections or changes to your placements, please contact your
+          roster administrator directly.
+        </p>
       </section>
+    </>
+  );
+}
+
+function RuleLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="section-rule">
+      <span className="hairline flex-1" />
+      <span className="eyebrow-accent shrink-0">{children}</span>
+      <span className="hairline flex-1" />
     </div>
   );
 }
 
-function SectionHeader({
-  eyebrow,
-  title,
-  subtitle,
-}: {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-}) {
+function BigStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="mb-5">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-teal-700/80 font-semibold">
-        {eyebrow}
-      </p>
-      <h2 className="mt-1.5 font-display text-2xl md:text-[28px] font-semibold text-slate-900 tracking-tight">
-        {title}
-      </h2>
-      <p className="text-sm text-slate-500 mt-1 max-w-2xl">{subtitle}</p>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className={
-        accent
-          ? "rounded-xl bg-white/15 ring-1 ring-white/25 px-4 py-3.5 backdrop-blur"
-          : "rounded-xl bg-white/5 ring-1 ring-white/10 px-4 py-3.5 backdrop-blur"
-      }
-    >
-      <dt className="text-[10px] uppercase tracking-[0.16em] text-teal-100/75">
-        {label}
-      </dt>
-      <dd className="mt-1 font-display text-3xl font-semibold text-white tabular-nums tracking-tight leading-none">
+    <div className="bg-[var(--card)] px-6 py-8">
+      <p className="eyebrow">{label}</p>
+      <p className="mt-3 font-display text-3xl md:text-4xl font-semibold text-[var(--foreground)] tabular-nums tracking-tight">
         {value}
-      </dd>
-      {sub && <div className="mt-1.5 text-[11px] text-teal-100/60">{sub}</div>}
-    </div>
-  );
-}
-
-function StatusCard({
-  tone,
-  icon,
-  title,
-  desc,
-}: {
-  tone: "teal" | "emerald" | "amber";
-  icon: "clock" | "check" | "alert";
-  title: string;
-  desc: string;
-}) {
-  const cls = {
-    teal: "bg-white border-teal-100 text-teal-900 [--icon-bg:var(--color-teal-50)] [--icon-fg:var(--color-teal-700)]",
-    emerald:
-      "bg-white border-emerald-100 text-emerald-900 [--icon-bg:var(--color-emerald-50)] [--icon-fg:var(--color-emerald-700)]",
-    amber:
-      "bg-white border-amber-100 text-amber-900 [--icon-bg:var(--color-amber-50)] [--icon-fg:var(--color-amber-700)]",
-  }[tone];
-  return (
-    <div className={`flex items-start gap-3 rounded-xl border ${cls} p-4 shadow-sm`}>
-      <span
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-current/10"
-        style={{ background: "var(--icon-bg)", color: "var(--icon-fg)" }}
-      >
-        {icon === "clock" && (
-          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 2" />
-          </svg>
-        )}
-        {icon === "check" && (
-          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12.5l4.5 4.5L20 6" />
-          </svg>
-        )}
-        {icon === "alert" && (
-          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 9v4M12 17h.01" />
-            <path d="M10.3 3.86l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.14l-8-14a2 2 0 0 0-3.4 0z" />
-          </svg>
-        )}
-      </span>
-      <div className="min-w-0">
-        <div className="text-sm font-medium leading-snug">{title}</div>
-        <div className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</div>
-      </div>
+      </p>
     </div>
   );
 }
 
 function SeatBadge({ filled, capacity }: { filled: number; capacity: number }) {
   const ratio = capacity === 0 ? 0 : filled / capacity;
-  let cls = "bg-emerald-50 text-emerald-700 ring-emerald-100";
-  if (ratio >= 1) cls = "bg-rose-50 text-rose-700 ring-rose-100";
-  else if (ratio >= 0.7) cls = "bg-amber-50 text-amber-700 ring-amber-100";
+  let cls = "bg-[var(--emerald-soft)] text-[var(--emerald)] border-[var(--emerald)]/30";
+  if (ratio >= 1) cls = "bg-[var(--rose-soft)] text-[var(--rose)] border-[var(--rose)]/30";
+  else if (ratio >= 0.7) cls = "bg-[var(--amber-soft)] text-[var(--amber)] border-[var(--amber)]/30";
   return (
     <span
-      className={`inline-flex items-center justify-center min-w-[3.25rem] gap-1 px-2 py-0.5 rounded-md text-xs ring-1 ${cls} tabular-nums`}
+      className={`inline-flex items-center justify-center min-w-[3.25rem] gap-1 px-2 py-0.5 rounded-md text-xs border ${cls} tabular-nums font-mono-label`}
     >
       {filled} / {capacity}
     </span>
@@ -389,9 +320,7 @@ function DeptChip({ name }: { name: string }) {
   const cat = classify(name);
   const style = categoryStyle[cat];
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs ring-1 ${style.chip}`}
-    >
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border ${style.chip}`}>
       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${style.bar}`} />
       {name}
     </span>
@@ -408,8 +337,8 @@ function Legend() {
     "Diagnostic",
   ] as const;
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-500">
-      <span className="uppercase tracking-[0.14em]">Categories:</span>
+    <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-[var(--muted-foreground)]">
+      <span className="eyebrow text-[10px]">Categories</span>
       {cats.map((c) => {
         const s = categoryStyle[c];
         return (

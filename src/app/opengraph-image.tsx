@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "House Job Selection Portal - Allied Hospital, Faisalabad";
+export const alt = "House Job Roster · FMU — assigned by merit, published transparently";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -14,55 +14,62 @@ export default async function Image() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          padding: "72px 80px",
-          background:
-            "linear-gradient(135deg, #0c6b5f 0%, #0e8c7e 35%, #0b3d4f 100%)",
-          color: "white",
-          fontFamily: "system-ui, sans-serif",
+          padding: "80px 96px",
+          background: "#FAFAF8",
+          color: "#1A1A1A",
+          fontFamily: "Georgia, serif",
           position: "relative",
         }}
       >
-        {/* Subtle dot pattern */}
+        {/* Decorative paper grain — very subtle */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             backgroundImage:
-              "radial-gradient(rgba(255,255,255,0.07) 1.5px, transparent 1.5px)",
-            backgroundSize: "32px 32px",
+              "radial-gradient(rgba(26,26,26,0.04) 1px, transparent 1px)",
+            backgroundSize: "3px 3px",
             display: "flex",
           }}
         />
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+
+        {/* Top mark */}
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <div
             style={{
-              width: 72,
-              height: 72,
-              borderRadius: 16,
-              background: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.2)",
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              border: "1.5px solid #B8860B",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              color: "#B8860B",
+              fontSize: 28,
+              fontFamily: "Georgia, serif",
             }}
           >
-            <svg width="40" height="40" viewBox="0 0 9 9">
-              <path
-                d="M 6.726 4.5 C 7.955 4.5 8.952 5.498 8.952 6.729 C 8.952 7.959 7.955 8.957 6.726 8.957 L 2.274 8.957 C 1.045 8.957 0.048 7.959 0.048 6.729 C 0.048 5.498 1.045 4.5 2.274 4.5 C 1.045 4.5 0.048 3.502 0.048 2.271 C 0.048 1.041 1.045 0.043 2.274 0.043 L 6.726 0.043 C 7.955 0.043 8.952 1.041 8.952 2.271 C 8.952 3.502 7.955 4.5 6.726 4.5 Z"
-                fill="white"
-              />
-            </svg>
+            R
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 20, opacity: 0.8, letterSpacing: 1.5 }}>
-              ALLIED HOSPITAL · FAISALABAD
+            <span
+              style={{
+                fontSize: 14,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                color: "#6B6B6B",
+                fontFamily: "monospace",
+              }}
+            >
+              Allied Hospital · Faisalabad
             </span>
-            <span style={{ fontSize: 28, fontWeight: 600 }}>House Job Portal</span>
+            <span style={{ fontSize: 26, color: "#1A1A1A", marginTop: 2 }}>
+              Roster · FMU
+            </span>
           </div>
         </div>
 
-        {/* Title */}
+        {/* Centerpiece */}
         <div
           style={{
             display: "flex",
@@ -72,50 +79,61 @@ export default async function Image() {
         >
           <span
             style={{
-              fontSize: 22,
-              opacity: 0.85,
-              letterSpacing: 2,
+              fontSize: 14,
+              letterSpacing: 5,
               textTransform: "uppercase",
+              color: "#B8860B",
+              fontFamily: "monospace",
             }}
           >
-            FMU House Officers · 2026-27
+            House Officers · 2026 — 2027
           </span>
           <span
             style={{
-              marginTop: 18,
-              fontSize: 84,
-              fontWeight: 700,
-              letterSpacing: -1.5,
+              marginTop: 28,
+              fontSize: 92,
+              fontWeight: 400,
+              letterSpacing: -2.4,
               lineHeight: 1.05,
+              color: "#1A1A1A",
             }}
           >
-            House Officer
+            The roster,
             <br />
-            Seat Selection
+            <span style={{ fontStyle: "italic", color: "#B8860B" }}>
+              composed
+            </span>{" "}
+            by merit.
           </span>
           <span
             style={{
-              marginTop: 14,
-              fontSize: 28,
-              opacity: 0.82,
-              fontWeight: 500,
+              marginTop: 24,
+              fontSize: 22,
+              color: "#6B6B6B",
+              fontFamily: "Georgia, serif",
+              fontStyle: "italic",
+              lineHeight: 1.5,
             }}
           >
-            FMU 2026-27 · 1 June 2026 → 31 May 2027
+            Four three-month rotations, assigned and finalized by the
+            <br />
+            admin team, published transparently as they&apos;re confirmed.
           </span>
         </div>
 
-        {/* Footer band */}
+        {/* Footer rule */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginTop: 40,
+            marginTop: 56,
             paddingTop: 24,
-            borderTop: "1px solid rgba(255,255,255,0.15)",
-            fontSize: 22,
-            opacity: 0.85,
+            borderTop: "1px solid #E8E4DF",
+            fontSize: 16,
+            color: "#6B6B6B",
+            fontFamily: "monospace",
+            letterSpacing: 1.5,
           }}
         >
           <span>4 rotations · 39 departments</span>

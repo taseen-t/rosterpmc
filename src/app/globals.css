@@ -1,153 +1,183 @@
 @import "tailwindcss";
 
+/* ─── Serif editorial palette ────────────────────────────────────────────
+ * Warm ivory canvas, rich-not-black ink, a single burnished-gold accent.
+ * Everything else is restraint: thin warm-gray rules, small-caps labels,
+ * generous whitespace. The serif is the soul. */
+
 :root {
-  --background: #f6f4ee;
-  --cream: #f6f4ee;
-  --foreground: #0c1727;
+  /* Surfaces */
+  --background: #FAFAF8;      /* Ivory canvas — warmer than white */
+  --foreground: #1A1A1A;      /* Rich black, not pure */
+  --muted: #F5F3F0;           /* Secondary surface */
+  --muted-foreground: #6B6B6B;/* Warm secondary text */
+  --card: #FFFFFF;            /* Card surfaces lift from ivory */
 
-  --teal-50: #effcfa;
-  --teal-100: #cef7f1;
-  --teal-200: #9aeee0;
-  --teal-300: #5fdcc7;
-  --teal-500: #14b8a6;
-  --teal-600: #0e8c7e;
-  --teal-700: #0c6b5f;
-  --teal-800: #0a4e44;
+  /* Lines */
+  --border: #E8E4DF;          /* Warm gray rules */
+  --border-strong: #D9D3CB;   /* Tables, header bottom */
 
-  --navy-700: #0f3d6e;
-  --navy-800: #0b2e54;
-  --navy-900: #082040;
+  /* Accent — burnished gold */
+  --accent: #B8860B;
+  --accent-soft: #D4A84B;     /* hover, gradient end */
+  --accent-muted: #F2E8C9;    /* gold-tinted background */
+  --accent-foreground: #FFFFFF;
 
-  --emerald-50: #ecfdf5;
-  --emerald-100: #d1fae5;
-  --emerald-700: #047857;
+  /* Status tints — kept editorial, lower saturation, warm */
+  --emerald: #2F6E51;
+  --emerald-soft: #E7EFEA;
+  --amber: #8C6A1A;
+  --amber-soft: #F4ECDA;
+  --rose: #8E2A2A;
+  --rose-soft: #F1E1E1;
 
-  --amber-50: #fffbeb;
-  --amber-100: #fef3c7;
-  --amber-700: #b45309;
-
-  --rose-50: #fff1f2;
-  --rose-100: #ffe4e6;
-  --rose-700: #be123c;
-
-  --slate-50: #f8fafc;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-500: #64748b;
-  --slate-600: #475569;
-  --slate-700: #334155;
-  --slate-800: #1e293b;
-  --slate-900: #0f172a;
+  /* Ring */
+  --ring: #B8860B;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-cream: var(--cream);
   --color-foreground: var(--foreground);
-  --color-teal-50: var(--teal-50);
-  --color-teal-100: var(--teal-100);
-  --color-teal-200: var(--teal-200);
-  --color-teal-300: var(--teal-300);
-  --color-teal-500: var(--teal-500);
-  --color-teal-600: var(--teal-600);
-  --color-teal-700: var(--teal-700);
-  --color-teal-800: var(--teal-800);
-  --color-navy-700: var(--navy-700);
-  --color-navy-800: var(--navy-800);
-  --color-navy-900: var(--navy-900);
-  --color-emerald-50: var(--emerald-50);
-  --color-emerald-100: var(--emerald-100);
-  --color-emerald-700: var(--emerald-700);
-  --color-amber-50: var(--amber-50);
-  --color-amber-100: var(--amber-100);
-  --color-amber-700: var(--amber-700);
-  --color-rose-50: var(--rose-50);
-  --color-rose-100: var(--rose-100);
-  --color-rose-700: var(--rose-700);
-  --color-slate-50: var(--slate-50);
-  --color-slate-100: var(--slate-100);
-  --color-slate-200: var(--slate-200);
-  --color-slate-300: var(--slate-300);
-  --color-slate-500: var(--slate-500);
-  --color-slate-600: var(--slate-600);
-  --color-slate-700: var(--slate-700);
-  --color-slate-800: var(--slate-800);
-  --color-slate-900: var(--slate-900);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-emerald: var(--emerald);
+  --color-emerald-soft: var(--emerald-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans-body);
+  --font-mono: var(--font-mono-label);
+  --font-display: var(--font-display-serif);
+}
+
+/* ─── Base ─── */
+
+html {
+  background: var(--background);
 }
 
 body {
-  background:
-    radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.06), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(11, 46, 84, 0.05), transparent 40%),
-    var(--cream);
-  background-attachment: fixed;
+  background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans-body), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
+  letter-spacing: 0.01em;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Subtle paper texture across the whole page — visible only on close
+ * inspection, but it kills the flat-screen plastic look. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(26, 26, 26, 0.04) 1px,
+    transparent 0
+  );
+  background-size: 3px 3px;
+}
+
+/* Ambient warm glow — far-off gold halo that anchors the page. */
+body::after {
+  content: "";
+  position: fixed;
+  top: -10rem;
+  left: -10rem;
+  width: 60rem;
+  height: 60rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Type utilities ─── */
 
 .font-display {
-  font-family: var(--font-display), ui-serif, Georgia, serif;
-  font-feature-settings: "ss01";
+  font-family: var(--font-display-serif), ui-serif, Georgia, serif;
+  font-feature-settings: "ss01", "lnum";
+  letter-spacing: -0.012em;
 }
 
-*:focus-visible {
-  outline: 2px solid var(--teal-500);
-  outline-offset: 2px;
-  border-radius: 4px;
+.font-mono-label {
+  font-family: var(--font-mono-label), ui-monospace, monospace;
+  font-feature-settings: "tnum";
 }
+
+/* Small caps label — the signature meta-text treatment. Use sparingly. */
+@utility eyebrow {
+  font-family: var(--font-mono-label), ui-monospace, monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* Same as eyebrow but in gold for "this section is important". */
+@utility eyebrow-accent {
+  font-family: var(--font-mono-label), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Rule with centered label — editorial section delimiter. */
+@utility section-rule {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Thin hairline — used as bare horizontal divider. */
+@utility hairline {
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Focus ─── */
+
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ─── Horizontal-scroll containers (data tables) ─── */
 
 .scrollx {
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--slate-200) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 .scrollx::-webkit-scrollbar {
   height: 8px;
 }
 .scrollx::-webkit-scrollbar-thumb {
-  background: var(--slate-200);
+  background: var(--border-strong);
   border-radius: 4px;
 }
 
-/* Hospital cross pattern background */
-.bg-rx {
-  background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
+/* ─── Anchor placement on content ─── */
 
-/* Live pulse */
-@keyframes pulse-soft {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.4); opacity: 0; }
-}
-.live-dot::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: currentColor;
-  animation: pulse-soft 2s ease-out infinite;
-}
-
-/* Subtle hairline divider */
-.hr-fade {
-  background: linear-gradient(to right, transparent, var(--slate-200), transparent);
-}
-
-/* Plain big green × glyph for the credit line */
-.neon-x {
-  display: inline-block;
-  margin: 0 0.35em;
-  color: #16a34a;
-  font-weight: 800;
-  font-size: 1.5em;
-  line-height: 0.9;
-  vertical-align: -0.05em;
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+main {
+  position: relative;
+  z-index: 1;
 }

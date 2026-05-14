@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { isAdmin } from "@/lib/auth";
 import { getStudentsWithOverrides } from "@/lib/data";
-import { getAllSelections } from "@/lib/selections";
+import { getAllSelections, getSubmittedSet } from "@/lib/selections";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +18,10 @@ export async function GET() {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const [students, selections] = await Promise.all([
+  const [students, selections, submittedSet] = await Promise.all([
     getStudentsWithOverrides(),
     getAllSelections(),
+    getSubmittedSet(),
   ]);
 
   // Build per-roll selection map
@@ -44,7 +45,7 @@ export async function GET() {
     "Name",
     "Total /1500",
     "Result",
-    "Submitted",
+    "Finalized",
     "Source",
     ROTATION_LABELS[1],
     ROTATION_LABELS[2],
@@ -54,8 +55,6 @@ export async function GET() {
 
   type Row = (string | number | null)[];
   const rows: Row[] = [headers];
-
-  const submittedSet = new Set(selections.map((s) => s.roll_no));
 
   for (const s of [...passes, ...fails]) {
     const picks = byRoll.get(s.roll_no);

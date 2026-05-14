@@ -32,14 +32,27 @@ export const sql: Sql = (globalThis.__sql ??= makeSql());
 
 async function runSchema() {
   // Wrap everything in a transaction with a TRANSACTION-scoped advisory
-  // lock. That way the lock is auto-released the moment the transaction
-  // commits or rolls back — even if the function instance dies. Replaces
-  // an earlier session-scoped lock that could leak when postgres-js
-  // returned the connection to the pool without unlocking.
+  // lock. The lock auto-releases the moment the transaction commits or
+  // rolls back — even if the function instance dies mid-DDL.
   const LOCK_KEY = 914829417;
   await sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(${LOCK_KEY})`;
     await tx.unsafe(`
+      -- ── One-time cleanup: drop the tables that powered student auth,
+      -- support tickets, notifications and the access log. The model is
+      -- now admin-only. Safe to re-run; IF EXISTS makes it idempotent.
+      DROP TABLE IF EXISTS student_credentials CASCADE;
+      DROP TABLE IF EXISTS support_requests CASCADE;
+      DROP TABLE IF EXISTS notifications CASCADE;
+      DROP TABLE IF EXISTS access_log CASCADE;
+      DROP TABLE IF EXISTS google_links CASCADE;
+
+      -- ── Core tables that remain ─────────────────────────────────────
+
+      -- Per-student rotation picks. Admin writes one row per rotation per
+      -- student. UNIQUE on (roll_no, rotation) keeps each student to one
+      -- pick per rotation; UNIQUE on (roll_no, department) enforces the
+      -- "no department twice" rule.
       CREATE TABLE IF NOT EXISTS selections (
         id              SERIAL PRIMARY KEY,
         roll_no         TEXT NOT NULL,
@@ -51,14 +64,24 @@ async function runSchema() {
       );
       CREATE INDEX IF NOT EXISTS idx_selections_dept_rotation ON selections (department, rotation);
       CREATE INDEX IF NOT EXISTS idx_selections_roll ON selections (roll_no);
+
+      -- Per-student "finalized" flag — admin flips this when picks are
+      -- locked. Unlocking just deletes the row; picks themselves remain
+      -- as the draft.
       CREATE TABLE IF NOT EXISTS submissions (
         roll_no         TEXT PRIMARY KEY,
         submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      -- Admin overrides for department capacity (number of seats per
+      -- rotation). Null row = use the static default from departments.json.
       CREATE TABLE IF NOT EXISTS dept_overrides (
         name            TEXT PRIMARY KEY,
         capacity        INT  NOT NULL CHECK (capacity >= 0)
       );
+
+      -- Admin overrides for individual students (name/total/result/rank
+      -- override, plus a hidden flag to suppress a stale OCR row).
       CREATE TABLE IF NOT EXISTS student_overrides (
         roll_no         TEXT PRIMARY KEY,
         name            TEXT,
@@ -67,16 +90,9 @@ async function runSchema() {
         rank            INT,
         hidden          BOOLEAN NOT NULL DEFAULT FALSE
       );
-      CREATE TABLE IF NOT EXISTS audit_log (
-        id              SERIAL PRIMARY KEY,
-        actor           TEXT NOT NULL,
-        action          TEXT NOT NULL,
-        detail          JSONB,
-        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
 
-      -- Net-new student records added by admin (not in original OCR'd PDF).
-      -- These get re-ranked alongside OCR students by total marks.
+      -- Net-new students added by admin (not in original OCR'd PDF).
+      -- Re-ranked alongside OCR students by total marks.
       CREATE TABLE IF NOT EXISTS student_additions (
         roll_no         TEXT PRIMARY KEY,
         name            TEXT NOT NULL,
@@ -85,89 +101,29 @@ async function runSchema() {
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
-      -- Students an admin has marked "skipped" so they don't block lower
-      -- ranks (e.g. won't be joining, abroad, dropped out). Their rank slot
-      -- is essentially passed over for the rotation-locking gate.
+      -- Students an admin has marked "skipped". Their slot is passed
+      -- over in any merit-ordered view.
       CREATE TABLE IF NOT EXISTS skipped_students (
         roll_no         TEXT PRIMARY KEY,
         reason          TEXT,
         skipped_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
-      -- User-submitted requests for corrections / help, viewable in admin.
-      CREATE TABLE IF NOT EXISTS support_requests (
+      -- Append-only history of every admin action, for accountability.
+      CREATE TABLE IF NOT EXISTS audit_log (
         id              SERIAL PRIMARY KEY,
-        roll_no         TEXT,
-        contact         TEXT,
-        category        TEXT,
-        message         TEXT NOT NULL,
-        resolved        BOOLEAN NOT NULL DEFAULT FALSE,
-        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-      CREATE INDEX IF NOT EXISTS idx_support_unresolved ON support_requests (created_at DESC) WHERE NOT resolved;
-
-      -- Audit trail of every access attempt against a roll number - login
-      -- successes/failures and select-page views. Lets the admin see who
-      -- tried to log in as whom, from where, and when.
-      CREATE TABLE IF NOT EXISTS access_log (
-        id              SERIAL PRIMARY KEY,
-        roll_no         TEXT NOT NULL,
-        actor           TEXT,
+        actor           TEXT NOT NULL,
         action          TEXT NOT NULL,
-        ip              TEXT,
-        country         TEXT,
-        city            TEXT,
-        user_agent      TEXT,
+        detail          JSONB,
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
-      CREATE INDEX IF NOT EXISTS idx_access_log_roll ON access_log (roll_no, created_at DESC);
-      CREATE INDEX IF NOT EXISTS idx_access_log_recent ON access_log (created_at DESC);
-
-      -- google_links was the previous OAuth-based auth scheme. We've moved
-      -- to CNIC-based credentials below, so just leave any existing
-      -- google_links rows alone (don't read them, don't create new ones).
-      -- The CREATE IF NOT EXISTS keeps old deployments compatible.
-      CREATE TABLE IF NOT EXISTS google_links (
-        google_email    TEXT PRIMARY KEY,
-        roll_no         TEXT,
-        first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-
-      -- Lightweight notifications: students get pinged when their support
-      -- request is resolved; admin recipient is the literal string '@admin'
-      -- and any logged-in admin sees those.
-      CREATE TABLE IF NOT EXISTS notifications (
-        id              SERIAL PRIMARY KEY,
-        recipient       TEXT NOT NULL,
-        kind            TEXT NOT NULL,
-        title           TEXT NOT NULL,
-        body            TEXT,
-        link            TEXT,
-        read            BOOLEAN NOT NULL DEFAULT FALSE,
-        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-      CREATE INDEX IF NOT EXISTS idx_notif_recipient
-        ON notifications (recipient, read, created_at DESC);
-
-      -- CNIC-based credentials. The student types (name, CNIC, roll) the
-      -- first time, and on every login after that just types CNIC.
-      CREATE TABLE IF NOT EXISTS student_credentials (
-        roll_no         TEXT PRIMARY KEY,
-        cnic            TEXT NOT NULL,
-        display_name    TEXT,
-        registered_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_creds_cnic
-        ON student_credentials (cnic);
     `);
   });
   globalThis.__schemaDone = true;
 }
 
 export function ensureSchema(): Promise<void> {
-  // Fast-path once we know the schema's good in this instance — skips the
-  // round-trip to the lock manager on every request.
+  // Fast-path once we know the schema's good in this instance.
   if (globalThis.__schemaDone) return Promise.resolve();
   return (globalThis.__schemaPromise ??= runSchema().catch((err) => {
     // Reset so the next request can retry instead of being permanently

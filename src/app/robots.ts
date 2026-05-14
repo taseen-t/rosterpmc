@@ -6,14 +6,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Keep authenticated, admin, and API surface out of search engines.
-        disallow: [
-          "/admin",
-          "/admin/login",
-          "/api/",
-          "/select",
-          "/link-roll",
-        ],
+        // Keep admin and internal API surface out of search engines.
+        disallow: ["/admin", "/admin/login", "/api/"],
       },
     ],
     sitemap: "https://rosterpmc.vercel.app/sitemap.xml",

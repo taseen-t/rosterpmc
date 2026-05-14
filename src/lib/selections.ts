@@ -1,37 +1,7 @@
 import { sql, ensureSchema } from "./db";
-import {
-  getDepartmentsWithOverrides,
-  getStudentsWithOverrides,
-  type Student,
-} from "./data";
+import { getDepartmentsWithOverrides } from "./data";
 
-/**
- * Returns the highest-priority student (lowest rank number) who hasn't
- * submitted yet AND isn't admin-skipped, IF that student outranks `roll`.
- * Returns null when `roll` may proceed.
- */
-export async function getRankBlocker(roll: string): Promise<Student | null> {
-  await ensureSchema();
-  const students = await getStudentsWithOverrides();
-  const me = students.find((s) => s.roll_no === roll);
-  if (!me || me.rank == null) return null;
-
-  const submitted = await sql<{ roll_no: string }[]>`SELECT roll_no FROM submissions`;
-  const submittedSet = new Set(submitted.map((s) => s.roll_no));
-
-  const passes = students
-    .filter((s) => s.overall === "Pass" && s.rank != null)
-    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
-
-  for (const s of passes) {
-    if ((s.rank ?? 0) >= (me.rank ?? 0)) return null;
-    if (s.skipped) continue;
-    if (submittedSet.has(s.roll_no)) continue;
-    return s;
-  }
-  return null;
-}
-
+/** One row per (student, rotation, department). */
 export type SelectionRow = {
   roll_no: string;
   rotation: number;
@@ -41,23 +11,27 @@ export type SelectionRow = {
 
 export async function getAllSelections(): Promise<SelectionRow[]> {
   await ensureSchema();
-  const rows = await sql<SelectionRow[]>`
+  return await sql<SelectionRow[]>`
     SELECT roll_no, rotation, department, created_at::text AS created_at
     FROM selections
     ORDER BY created_at ASC
   `;
-  return rows;
 }
 
 export async function getSelectionsByRoll(roll: string): Promise<SelectionRow[]> {
   await ensureSchema();
-  const rows = await sql<SelectionRow[]>`
+  return await sql<SelectionRow[]>`
     SELECT roll_no, rotation, department, created_at::text AS created_at
     FROM selections
     WHERE roll_no = ${roll}
     ORDER BY rotation ASC
   `;
-  return rows;
+}
+
+export async function getSubmittedSet(): Promise<Set<string>> {
+  await ensureSchema();
+  const rows = await sql<{ roll_no: string }[]>`SELECT roll_no FROM submissions`;
+  return new Set(rows.map((r) => r.roll_no));
 }
 
 export async function isSubmitted(roll: string): Promise<boolean> {
@@ -68,6 +42,7 @@ export async function isSubmitted(roll: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+/** Group selections by department × rotation → headcount. */
 export async function getDepartmentLoad(): Promise<Map<string, Map<number, number>>> {
   await ensureSchema();
   const rows = await sql<{ department: string; rotation: number; count: number }[]>`
@@ -107,69 +82,74 @@ export async function getSeatMatrix(): Promise<SeatMatrixRow[]> {
   });
 }
 
-export type SubmitArgs = {
+/**
+ * Admin sets the four rotation picks for a single student. Atomic: either
+ * all four are written (replacing any existing picks) or nothing changes.
+ *
+ * - `picks` must cover rotations 1–4 with four distinct departments.
+ * - Each (department, rotation) is checked against the LIVE seat count
+ *   AFTER excluding this student's own existing picks, so re-saving the
+ *   same picks doesn't false-trigger a "full" error.
+ * - If the student was previously finalized, the lock persists. To edit a
+ *   locked student, admin must unlock first.
+ */
+export async function adminWriteStudentPicks(args: {
   roll: string;
   picks: { rotation: number; department: string }[];
-};
-
-export async function submitSelections(args: SubmitArgs): Promise<{ ok: true } | { ok: false; error: string }> {
+}): Promise<{ ok: true } | { ok: false; error: string }> {
   await ensureSchema();
   const { roll, picks } = args;
 
-  if (picks.length !== 4) return { ok: false, error: "All 4 rotations must be picked." };
+  if (picks.length !== 4) {
+    return { ok: false, error: "Pick four rotations before saving." };
+  }
   const rotations = new Set(picks.map((p) => p.rotation));
-  if (rotations.size !== 4 || ![1, 2, 3, 4].every((r) => rotations.has(r)))
+  if (rotations.size !== 4 || ![1, 2, 3, 4].every((r) => rotations.has(r))) {
     return { ok: false, error: "Picks must cover rotations 1, 2, 3, and 4." };
+  }
   const depts = new Set(picks.map((p) => p.department));
-  if (depts.size !== 4) return { ok: false, error: "All 4 departments must be different." };
-
-  const students = await getStudentsWithOverrides();
-  const me = students.find((s) => s.roll_no === roll);
-  if (!me) return { ok: false, error: "Roll number not recognized." };
-  if (me.overall !== "Pass") return { ok: false, error: "Only candidates who passed are eligible." };
-  if (me.rank == null) return { ok: false, error: "Your rank is not set. Contact Support." };
-
-  // Rank-based locking: a lower-ranked student cannot submit until every
-  // higher-ranked student has either submitted or been skipped by admin.
-  const blocker = await getRankBlocker(roll);
-  if (blocker) {
-    return {
-      ok: false,
-      error: `Please wait - Rank #${blocker.rank} (${blocker.name}) hasn't selected their rotations yet. Higher merit picks first.`,
-    };
+  if (depts.size !== 4) {
+    return { ok: false, error: "All four departments must be different." };
   }
 
   const validDepts = new Set((await getDepartmentsWithOverrides()).map((d) => d.name));
   for (const p of picks) {
-    if (!validDepts.has(p.department))
+    if (!validDepts.has(p.department)) {
       return { ok: false, error: `Unknown department: ${p.department}` };
+    }
   }
 
   try {
     await sql.begin(async (tx) => {
+      // Check the lock — locked students can't be edited from this path.
       const subRows = await tx<{ roll_no: string }[]>`
         SELECT roll_no FROM submissions WHERE roll_no = ${roll}
       `;
       if (subRows.length > 0) throw new Error("LOCKED");
 
+      // Capacity check that ignores the student's own existing picks.
       for (const p of picks) {
         const dRows = await tx<{ capacity: number }[]>`
           SELECT capacity FROM dept_overrides WHERE name = ${p.department}
         `;
-        const cRows = await tx<{ count: number }[]>`
-          SELECT COUNT(*)::int AS count FROM selections
-          WHERE department = ${p.department} AND rotation = ${p.rotation}
-        `;
-        const baseCapacity =
+        const capacity =
           dRows.length > 0
             ? dRows[0].capacity
             : (await getDepartmentsWithOverrides()).find((d) => d.name === p.department)!.capacity;
+        const cRows = await tx<{ count: number }[]>`
+          SELECT COUNT(*)::int AS count FROM selections
+          WHERE department = ${p.department}
+            AND rotation = ${p.rotation}
+            AND roll_no <> ${roll}
+        `;
         const filled = cRows[0].count;
-        if (filled >= baseCapacity) {
+        if (filled >= capacity) {
           throw new Error(`FULL:${p.department}:${p.rotation}`);
         }
       }
 
+      // Replace the four rows for this student in one transaction.
+      await tx`DELETE FROM selections WHERE roll_no = ${roll}`;
       for (const p of picks) {
         await tx`
           INSERT INTO selections (roll_no, rotation, department)
@@ -177,21 +157,72 @@ export async function submitSelections(args: SubmitArgs): Promise<{ ok: true } |
         `;
       }
       await tx`
-        INSERT INTO submissions (roll_no) VALUES (${roll})
-      `;
-      await tx`
         INSERT INTO audit_log (actor, action, detail)
-        VALUES (${"student:" + roll}, ${"submit"}, ${tx.json({ picks })})
+        VALUES (${"admin"}, ${"set-picks"}, ${tx.json({ roll, picks })})
       `;
     });
     return { ok: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg === "LOCKED") return { ok: false, error: "You have already submitted; selections are final." };
+    if (msg === "LOCKED") {
+      return {
+        ok: false,
+        error: "This student is finalized. Unlock first to edit picks.",
+      };
+    }
     if (msg.startsWith("FULL:")) {
       const [, dept, rot] = msg.split(":");
-      return { ok: false, error: `${dept} (Rotation ${rot}) just got full. Please choose another.` };
+      return {
+        ok: false,
+        error: `${dept} (Rotation ${rot}) is full. Pick a different department.`,
+      };
     }
-    return { ok: false, error: "Could not save selections. Try again." };
+    return { ok: false, error: "Could not save picks. Try again." };
   }
+}
+
+/** Mark this student as finalized (locked). Picks must already be saved. */
+export async function adminFinalize(roll: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const picks = await sql<{ rotation: number }[]>`
+    SELECT rotation FROM selections WHERE roll_no = ${roll}
+  `;
+  if (picks.length < 4) {
+    return {
+      ok: false,
+      error: `Only ${picks.length} of 4 rotations are set. Pick all four before finalizing.`,
+    };
+  }
+  await sql`
+    INSERT INTO submissions (roll_no) VALUES (${roll})
+    ON CONFLICT (roll_no) DO NOTHING
+  `;
+  await sql`
+    INSERT INTO audit_log (actor, action, detail)
+    VALUES (${"admin"}, ${"finalize"}, ${sql.json({ roll })})
+  `;
+  return { ok: true };
+}
+
+/** Unlock a finalized student. Draft picks remain — admin can edit them. */
+export async function adminUnfinalize(roll: string): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM submissions WHERE roll_no = ${roll}`;
+  await sql`
+    INSERT INTO audit_log (actor, action, detail)
+    VALUES (${"admin"}, ${"unfinalize"}, ${sql.json({ roll })})
+  `;
+}
+
+/** Clear all picks for a student (and unlock if locked). */
+export async function adminClearPicks(roll: string): Promise<void> {
+  await ensureSchema();
+  await sql.begin(async (tx) => {
+    await tx`DELETE FROM selections WHERE roll_no = ${roll}`;
+    await tx`DELETE FROM submissions WHERE roll_no = ${roll}`;
+    await tx`
+      INSERT INTO audit_log (actor, action, detail)
+      VALUES (${"admin"}, ${"clear-picks"}, ${tx.json({ roll })})
+    `;
+  });
 }

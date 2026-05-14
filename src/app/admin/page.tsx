@@ -6,27 +6,17 @@ import {
   getStaticStudents,
   getStaticDepartments,
 } from "@/lib/data";
-import { getAllSelections } from "@/lib/selections";
-import { sql, ensureSchema } from "@/lib/db";
-import { getRecentAccessLog } from "@/lib/access";
-import { listAllCredentials } from "@/lib/credentials";
+import {
+  getAllSelections,
+  getSubmittedSet,
+  getDepartmentLoad,
+} from "@/lib/selections";
+import { ensureSchema } from "@/lib/db";
 import { CapacityEditor } from "./CapacityEditor";
 import { StudentEditor } from "./StudentEditor";
 import { AdminLogoutButton } from "./AdminLogoutButton";
 import { AddStudentForm } from "./AddStudentForm";
-import { SupportRequests } from "./SupportRequests";
-import { SessionsView } from "./SessionsView";
-import { CredentialsView } from "./CredentialsView";
-
-type SupportRow = {
-  id: number;
-  roll_no: string | null;
-  contact: string | null;
-  category: string | null;
-  message: string;
-  resolved: boolean;
-  created_at: string;
-};
+import type { DepartmentLoad } from "./RotationEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -34,23 +24,32 @@ export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
   await ensureSchema();
-  const [students, departments, selections, supportRows, accessRows, credentials] = await Promise.all([
+  const [students, departments, selections, submittedSet, load] = await Promise.all([
     getStudentsWithOverrides(),
     getDepartmentsWithOverrides(),
     getAllSelections(),
-    sql<SupportRow[]>`
-      SELECT id, roll_no, contact, category, message, resolved, created_at::text AS created_at
-      FROM support_requests
-      ORDER BY resolved ASC, created_at DESC
-      LIMIT 200
-    `,
-    getRecentAccessLog(300),
-    listAllCredentials(),
+    getSubmittedSet(),
+    getDepartmentLoad(),
   ]);
 
-  const submittedRolls = new Set(selections.map((s) => s.roll_no));
+  const picksByRoll: Record<string, { rotation: number; department: string }[]> = {};
+  for (const s of selections) {
+    if (!picksByRoll[s.roll_no]) picksByRoll[s.roll_no] = [];
+    picksByRoll[s.roll_no].push({ rotation: s.rotation, department: s.department });
+  }
+
+  const departmentLoad: DepartmentLoad[] = departments.map((d) => {
+    const counts = load.get(d.name) ?? new Map<number, number>();
+    return {
+      name: d.name,
+      capacity: d.capacity,
+      filled: [1, 2, 3, 4].map((r) => counts.get(r) ?? 0),
+    };
+  });
+
   const passes = students.filter((s) => s.overall === "Pass").length;
   const fails = students.length - passes;
+  const finalized = submittedSet.size;
 
   const staticStudents = getStaticStudents();
   const staticDepts = getStaticDepartments();
@@ -58,82 +57,67 @@ export default async function AdminPage() {
   const staticStudentMap = new Map(staticStudents.map((s) => [s.roll_no, s]));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 md:px-6 py-8 md:py-10 space-y-8">
-      <header className="flex items-end justify-between gap-4 flex-wrap">
+    <div className="mx-auto max-w-6xl px-6 md:px-8 py-12 md:py-16 space-y-16">
+      <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
-          <div className="flex items-center gap-2">
-            <span aria-hidden className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-navy-800/10 text-navy-800 text-[10px] uppercase tracking-[0.16em] font-semibold ring-1 ring-navy-800/15">
-              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z" />
-              </svg>
-              Admin
-            </span>
-            <span className="text-[11px] uppercase tracking-[0.14em] text-slate-400">
-              Roster control panel
-            </span>
-          </div>
-          <h1 className="mt-2 font-display text-3xl md:text-[34px] font-semibold text-slate-900 tracking-tight">
+          <p className="eyebrow-accent">Admin · Roster control</p>
+          <h1 className="mt-3 font-display text-4xl md:text-5xl font-semibold text-[var(--foreground)] tracking-tight">
             Control panel
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Correct student data, adjust seat capacities, or reset a user&apos;s submission.
+          <p className="mt-3 max-w-2xl text-[var(--muted-foreground)] leading-relaxed">
+            Manage department capacities, edit student records, assign rotation
+            picks, and finalize a student&apos;s schedule when their four placements
+            are confirmed.
           </p>
         </div>
         <AdminLogoutButton />
       </header>
 
-      <div className="grid sm:grid-cols-5 gap-3">
-        <Stat label="Students" value={students.length.toString()} tone="slate" />
-        <Stat label="Pass" value={passes.toString()} tone="emerald" />
-        <Stat label="Fail" value={fails.toString()} tone="rose" />
-        <Stat label="Submitted" value={`${submittedRolls.size}`} tone="teal" />
-        <Stat
-          label="Open tickets"
-          value={`${supportRows.filter((r) => !r.resolved).length}`}
-          tone="amber"
-        />
-      </div>
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[var(--border)] border border-[var(--border)] rounded-lg overflow-hidden">
+        <Stat label="Students" value={students.length.toString()} />
+        <Stat label="Pass" value={passes.toString()} />
+        <Stat label="Fail" value={fails.toString()} />
+        <Stat label="Finalized" value={`${finalized}`} />
+      </section>
 
-      {/* Excel export */}
-      <section className="flex flex-wrap items-center gap-3 p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-white to-teal-50/40">
+      <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-8 flex flex-wrap items-center gap-6">
         <div className="flex-1 min-w-0">
-          <h3 className="font-display text-base font-semibold text-slate-900">
-            Download general spreadsheet
+          <p className="eyebrow-accent">Export</p>
+          <h3 className="mt-2 font-display text-xl font-semibold text-[var(--foreground)]">
+            Download spreadsheet
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Excel sheet with every passed candidate, their merit rank, and their four
-            rotation picks (or blank if not yet submitted). Generates fresh on click.
+          <p className="text-sm text-[var(--muted-foreground)] mt-1.5 leading-relaxed">
+            Every passed candidate with their merit rank and four assigned
+            rotations (blank where not yet assigned). Generated fresh on click.
           </p>
         </div>
         <a
           href="/api/export.xlsx"
           download
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 text-sm font-medium shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[var(--foreground)] hover:bg-[var(--accent)] text-[var(--background)] font-medium text-sm transition-colors"
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
-          </svg>
           Export .xlsx
         </a>
       </section>
 
       <section>
         <SectionHeader
-          title="Departments & capacity"
-          subtitle="Capacity is per rotation - each department holds this many House Officers each 3-month rotation. Click a number to edit."
+          eyebrow="Departments"
+          title="Capacity per rotation"
+          subtitle="Each department holds this many House Officers per 3-month rotation. Click a number to edit."
         />
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] overflow-hidden">
           <div className="scrollx">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+              <thead className="bg-[var(--muted)] text-[var(--muted-foreground)] eyebrow">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium">Department</th>
-                  <th className="text-center px-4 py-3 font-medium">Capacity</th>
-                  <th className="text-center px-4 py-3 font-medium">Original (PDF)</th>
-                  <th className="px-4 py-3" />
+                  <th className="text-left px-5 py-3 font-normal">Department</th>
+                  <th className="text-center px-5 py-3 font-normal">Capacity</th>
+                  <th className="text-center px-5 py-3 font-normal">Original</th>
+                  <th className="px-5 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[var(--border)]">
                 {departments.map((d) => (
                   <CapacityEditor
                     key={d.name}
@@ -149,16 +133,19 @@ export default async function AdminPage() {
       </section>
 
       <section>
-        <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+        <div className="flex flex-wrap items-end justify-between gap-6 mb-6">
           <SectionHeader
-            title="Students"
-            subtitle="OCR-extracted from the result PDF + manually added. Edit any field, skip a no-show student, or remove a manually-added row."
+            eyebrow="Students & rotations"
+            title="Roster"
+            subtitle='Click "Set rotations" on a passing student to assign their four placements. Save a draft, then Finalize when confirmed.'
           />
           <AddStudentForm />
         </div>
         <StudentEditor
           students={students}
-          submittedRolls={Array.from(submittedRolls)}
+          submittedRolls={Array.from(submittedSet)}
+          picksByRoll={picksByRoll}
+          departments={departmentLoad}
           staticStudentMap={Object.fromEntries(
             Array.from(staticStudentMap.entries()).map(([k, v]) => [
               k,
@@ -167,64 +154,39 @@ export default async function AdminPage() {
           )}
         />
       </section>
-
-      <section>
-        <SectionHeader
-          title="Student credentials"
-          subtitle="One row per registered student. Each row appears here automatically the first time a student signs up. Edit a CNIC or display name when a student requests a correction. Delete a credential to release it for re-registration."
-        />
-        <CredentialsView rows={credentials} />
-      </section>
-
-      <section>
-        <SectionHeader
-          title="Support requests"
-          subtitle="Messages submitted by students through the Contact Support form."
-        />
-        <SupportRequests rows={supportRows} />
-      </section>
-
-      <section>
-        <SectionHeader
-          title="Sessions & access log"
-          subtitle="Every login attempt and selection-page visit, with IP, location, and device. Use the search to look up activity for a specific roll, IP, or city."
-        />
-        <SessionsView rows={accessRows} />
-      </section>
     </div>
   );
 }
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="mb-3">
-      <h2 className="text-lg md:text-xl font-semibold text-slate-900">{title}</h2>
-      <p className="text-sm text-slate-500 mt-0.5 max-w-2xl">{subtitle}</p>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
 }: {
-  label: string;
-  value: string;
-  tone: "slate" | "emerald" | "rose" | "teal" | "amber";
+  eyebrow: string;
+  title: string;
+  subtitle: string;
 }) {
-  const cls = {
-    slate: "bg-white ring-slate-200 text-slate-900",
-    emerald: "bg-emerald-50 ring-emerald-100 text-emerald-900",
-    rose: "bg-rose-50 ring-rose-100 text-rose-900",
-    teal: "bg-teal-50 ring-teal-100 text-teal-900",
-    amber: "bg-amber-50 ring-amber-100 text-amber-900",
-  }[tone];
   return (
-    <div className={`rounded-xl ring-1 px-4 py-3 ${cls}`}>
-      <div className="text-[11px] uppercase tracking-wider opacity-70">{label}</div>
-      <div className="mt-0.5 text-2xl font-semibold tabular-nums">{value}</div>
+    <div className="mb-6">
+      <p className="eyebrow-accent">{eyebrow}</p>
+      <h2 className="mt-2 font-display text-2xl md:text-[28px] font-semibold text-[var(--foreground)] tracking-tight">
+        {title}
+      </h2>
+      <p className="text-sm text-[var(--muted-foreground)] mt-1.5 max-w-2xl leading-relaxed">
+        {subtitle}
+      </p>
     </div>
   );
 }
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-[var(--card)] px-6 py-6">
+      <p className="eyebrow">{label}</p>
+      <p className="mt-2 font-display text-3xl font-semibold text-[var(--foreground)] tabular-nums tracking-tight">
+        {value}
+      </p>
+    </div>
+  );
+}

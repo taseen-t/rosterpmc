@@ -21,33 +21,28 @@ export function AdminLoginForm() {
           else router.refresh();
         });
       }}
-      className="space-y-4"
+      className="space-y-5"
     >
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-slate-700 mb-1.5"
-        >
-          Password
-        </label>
+      <label className="block">
+        <span className="eyebrow">Password</span>
         <input
           id="password"
           name="password"
           type="password"
           autoFocus
           required
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+          className="mt-2 w-full rounded-md border border-[var(--border-strong)] bg-[var(--card)] px-3.5 py-3 text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
         />
-      </div>
+      </label>
       {error && (
-        <div className="rounded-lg bg-rose-50 ring-1 ring-rose-100 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-md bg-[var(--rose-soft)] border border-[var(--rose)]/30 px-3 py-2 text-sm text-[var(--rose)]">
           {error}
         </div>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-white font-medium px-4 py-2.5 disabled:opacity-60"
+        className="w-full inline-flex justify-center items-center gap-2 rounded-md bg-[var(--foreground)] hover:bg-[var(--accent)] text-[var(--background)] font-medium px-4 py-3 transition-colors disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>
