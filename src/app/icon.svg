@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#14b8a6"/>
-      <stop offset="1" stop-color="#0b3d4f"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="32" height="32" rx="7" fill="url(#bg)"/>
-  <g transform="translate(8 8)">
-    <path d="M 11.954 8 C 14.139 8 15.911 9.775 15.911 11.962 C 15.911 14.149 14.139 15.924 11.954 15.924 L 4.046 15.924 C 1.861 15.924 0.089 14.149 0.089 11.962 C 0.089 9.775 1.861 8 4.046 8 C 1.861 8 0.089 6.225 0.089 4.038 C 0.089 1.851 1.861 0.076 4.046 0.076 L 11.954 0.076 C 14.139 0.076 15.911 1.851 15.911 4.038 C 15.911 6.225 14.139 8 11.954 8 Z" fill="#ffffff"/>
-  </g>
+  <rect width="32" height="32" fill="#DFE104"/>
+  <!-- Four stacked bars = four three-month rotations. Top bar full-strength,
+       lower three at reduced opacity so the scale reads even at 16x16. -->
+  <rect x="5" y="6"  width="22" height="3.2" fill="#000000"/>
+  <rect x="5" y="11" width="22" height="3.2" fill="#000000" opacity="0.62"/>
+  <rect x="5" y="16" width="22" height="3.2" fill="#000000" opacity="0.62"/>
+  <rect x="5" y="21" width="22" height="3.2" fill="#000000" opacity="0.62"/>
 </svg>

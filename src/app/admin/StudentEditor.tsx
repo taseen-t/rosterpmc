@@ -81,23 +81,23 @@ export function StudentEditor({
     ["fail", "Fail"],
     ["finalized", "Finalized"],
     ["skipped", "Skipped"],
-    ["added", "Manually added"],
-    ["issues", "Needs review"],
+    ["added", "Manual"],
+    ["issues", "Review"],
   ];
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--card)]">
-      <div className="flex flex-wrap items-center gap-3 p-4 border-b border-[var(--border)]">
-        <div className="flex flex-wrap gap-1">
+    <div className="border-2 border-[var(--border)]">
+      <div className="flex flex-wrap items-center gap-3 p-4 border-b-2 border-[var(--border)]">
+        <div className="flex flex-wrap gap-2">
           {tabs.map(([t, label]) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`px-3 py-1.5 rounded-md text-xs tracking-wide transition-colors border ${
+              className={`px-3 py-2 text-xs uppercase tracking-tighter font-bold transition-colors border-2 ${
                 tab === t
-                  ? "bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)]"
-                  : "bg-[var(--card)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--foreground)]"
+                  ? "bg-[var(--accent)] text-[var(--accent-foreground)] border-[var(--accent)]"
+                  : "bg-transparent text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--foreground)]"
               }`}
             >
               {label}
@@ -108,24 +108,24 @@ export function StudentEditor({
           type="search"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Search roll, name, reg…"
-          className="ml-auto w-full sm:w-72 rounded-md border border-[var(--border-strong)] px-3 py-1.5 text-sm focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
+          placeholder="SEARCH ROLL · NAME · REG"
+          className="ml-auto w-full sm:w-72 border-2 border-[var(--border)] bg-transparent px-3 py-2 text-sm uppercase tracking-tighter font-bold text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--accent)] outline-none"
         />
       </div>
       <div className="scrollx">
         <table className="min-w-full text-sm">
-          <thead className="bg-[var(--muted)] text-[var(--muted-foreground)] eyebrow">
+          <thead className="bg-[var(--muted)] eyebrow">
             <tr>
-              <th className="text-left px-4 py-3 font-normal">Rank</th>
-              <th className="text-left px-4 py-3 font-normal">Roll</th>
-              <th className="text-left px-4 py-3 font-normal">Name</th>
-              <th className="text-right px-4 py-3 font-normal">Total</th>
-              <th className="text-center px-4 py-3 font-normal">Result</th>
-              <th className="text-center px-4 py-3 font-normal">Finalized</th>
-              <th className="text-right px-4 py-3 font-normal">Actions</th>
+              <th className="text-left px-4 py-4 font-bold uppercase tracking-widest">Rank</th>
+              <th className="text-left px-4 py-4 font-bold uppercase tracking-widest">Roll</th>
+              <th className="text-left px-4 py-4 font-bold uppercase tracking-widest">Name</th>
+              <th className="text-right px-4 py-4 font-bold uppercase tracking-widest">Total</th>
+              <th className="text-center px-4 py-4 font-bold uppercase tracking-widest">Result</th>
+              <th className="text-center px-4 py-4 font-bold uppercase tracking-widest">Locked</th>
+              <th className="text-right px-4 py-4 font-bold uppercase tracking-widest">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border)]">
+          <tbody className="divide-y-2 divide-[var(--border)]">
             {sorted.map((s) => (
               <StudentRow
                 key={s.roll_no}
@@ -140,7 +140,7 @@ export function StudentEditor({
               <tr>
                 <td
                   colSpan={7}
-                  className="px-4 py-8 text-center text-[var(--muted-foreground)] text-sm"
+                  className="px-4 py-12 text-center text-[var(--muted-foreground)] uppercase tracking-widest text-sm"
                 >
                   No students match this filter.
                 </td>
@@ -284,8 +284,8 @@ function StudentRow({
 
   return (
     <>
-      <tr className={incomplete ? "bg-[var(--amber-soft)]/60" : "hover:bg-[var(--muted)]/40 transition-colors"}>
-        <td className="px-4 py-3 font-mono-label text-[var(--muted-foreground)] text-sm tabular-nums">
+      <tr className={incomplete ? "bg-[var(--amber)]/10" : "hover:bg-[var(--muted)]/40 transition-colors"}>
+        <td className="px-4 py-3.5 font-bold text-[var(--muted-foreground)] tabular-nums">
           {editing ? (
             <div className="flex flex-col gap-0.5">
               <input
@@ -293,23 +293,23 @@ function StudentRow({
                 value={rank}
                 onChange={(e) => setRank(e.target.value)}
                 placeholder="auto"
-                className="w-16 rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm font-mono-label focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
+                className="w-16 border-2 border-[var(--border)] bg-transparent px-2 py-1 text-sm font-bold focus:border-[var(--accent)] outline-none"
                 title="Leave blank to auto-rank by marks"
               />
-              <span className="text-[9px] text-[var(--muted-foreground)]">blank = auto</span>
+              <span className="text-[9px] uppercase tracking-widest text-[var(--muted-foreground)]">blank = auto</span>
             </div>
           ) : (
             student.rank ?? "—"
           )}
         </td>
-        <td className="px-4 py-3 font-mono-label text-sm">{student.roll_no}</td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3.5 font-bold text-sm tabular-nums">{student.roll_no}</td>
+        <td className="px-4 py-3.5">
           {editing ? (
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
+              className="w-full border-2 border-[var(--border)] bg-transparent px-2 py-1 text-sm focus:border-[var(--accent)] outline-none text-[var(--foreground)]"
             />
           ) : (
             <div className="flex flex-wrap items-center gap-2">
@@ -321,58 +321,57 @@ function StudentRow({
             </div>
           )}
         </td>
-        <td className="px-4 py-3 text-right tabular-nums font-mono-label text-sm">
+        <td className="px-4 py-3.5 text-right tabular-nums font-bold">
           {editing ? (
             <input
               type="number"
               value={total}
               onChange={(e) => setTotal(e.target.value)}
-              className="w-20 rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm text-right font-mono-label focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none"
+              className="w-20 border-2 border-[var(--border)] bg-transparent px-2 py-1 text-sm text-right font-bold focus:border-[var(--accent)] outline-none"
             />
           ) : (
             student.total ?? "—"
           )}
         </td>
-        <td className="px-4 py-3 text-center">
+        <td className="px-4 py-3.5 text-center">
           {editing ? (
             <select
               value={overall}
               onChange={(e) => setOverall(e.target.value as "Pass" | "Fail")}
-              className="rounded-md border border-[var(--border-strong)] px-2 py-1 text-sm"
+              className="border-2 border-[var(--border)] bg-transparent px-2 py-1 text-sm uppercase tracking-tight font-bold text-[var(--foreground)] focus:border-[var(--accent)] outline-none"
             >
               <option value="Pass">Pass</option>
               <option value="Fail">Fail</option>
             </select>
           ) : (
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs border ${
+              className={`inline-flex items-center px-2 py-0.5 text-[10px] uppercase tracking-widest font-bold border-2 ${
                 student.overall === "Pass"
-                  ? "bg-[var(--emerald-soft)] border-[var(--emerald)]/30 text-[var(--emerald)]"
-                  : "bg-[var(--rose-soft)] border-[var(--rose)]/30 text-[var(--rose)]"
+                  ? "border-[var(--emerald)] text-[var(--emerald)]"
+                  : "border-[var(--rose)] text-[var(--rose)]"
               }`}
             >
               {student.overall}
             </span>
           )}
         </td>
-        <td className="px-4 py-3 text-center">
+        <td className="px-4 py-3.5 text-center">
           {submitted ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-[var(--accent)]/40 bg-[var(--accent-muted)]/30 text-[var(--accent)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            <span className="inline-flex items-center px-2 py-0.5 bg-[var(--accent)] text-[var(--accent-foreground)] text-[10px] uppercase tracking-widest font-bold">
               Locked
             </span>
           ) : (
             <span className="text-[var(--muted-foreground)] text-xs">—</span>
           )}
         </td>
-        <td className="px-4 py-3 text-right whitespace-nowrap">
+        <td className="px-4 py-3.5 text-right whitespace-nowrap">
           {editing ? (
             <div className="inline-flex gap-1">
               <button
                 type="button"
                 onClick={save}
                 disabled={pending}
-                className="px-3 py-1 rounded-md bg-[var(--foreground)] hover:bg-[var(--accent)] text-[var(--background)] text-xs font-medium transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-[var(--accent)] text-[var(--accent-foreground)] uppercase tracking-tighter font-bold text-xs hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
               >
                 Save
               </button>
@@ -385,7 +384,7 @@ function StudentRow({
                   setOverall(student.overall);
                   setRank(student.rank?.toString() ?? "");
                 }}
-                className="px-3 py-1 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] text-xs"
+                className="px-3 py-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider text-xs"
               >
                 Cancel
               </button>
@@ -396,19 +395,19 @@ function StudentRow({
                 <button
                   type="button"
                   onClick={() => setRotOpen((v) => !v)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-bold uppercase tracking-tighter border-2 transition-colors ${
                     rotOpen
-                      ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-muted)]/30"
+                      ? "border-[var(--accent)] text-[var(--accent)] bg-transparent"
                       : "border-[var(--foreground)] text-[var(--foreground)] hover:bg-[var(--foreground)] hover:text-[var(--background)]"
                   }`}
                 >
-                  {rotOpen ? "Close rotations" : "Set rotations"}
+                  {rotOpen ? "Close" : "Rotations"}
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="px-3 py-1 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] text-xs"
+                className="px-3 py-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider font-bold text-xs"
               >
                 Edit
               </button>
@@ -416,16 +415,16 @@ function StudentRow({
                 type="button"
                 onClick={changeRoll}
                 disabled={pending}
-                className="px-3 py-1 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] text-xs disabled:opacity-50"
+                className="px-3 py-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider font-bold text-xs disabled:opacity-50"
               >
-                Change roll
+                Roll
               </button>
               {eligible && !submitted && (
                 <button
                   type="button"
                   onClick={toggleSkip}
                   disabled={pending}
-                  className="px-3 py-1 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] text-xs disabled:opacity-50"
+                  className="px-3 py-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider font-bold text-xs disabled:opacity-50"
                 >
                   {student.skipped ? "Unskip" : "Skip"}
                 </button>
@@ -435,7 +434,7 @@ function StudentRow({
                   type="button"
                   onClick={revert}
                   disabled={pending}
-                  className="px-3 py-1 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] text-xs disabled:opacity-50"
+                  className="px-3 py-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider font-bold text-xs disabled:opacity-50"
                   title="Revert edits"
                 >
                   Revert
@@ -446,17 +445,17 @@ function StudentRow({
                   type="button"
                   onClick={clearPicks}
                   disabled={pending}
-                  className="px-3 py-1 rounded-md text-[var(--amber)] hover:bg-[var(--amber-soft)] text-xs disabled:opacity-50"
+                  className="px-3 py-1.5 text-[var(--amber)] uppercase tracking-wider font-bold text-xs hover:text-[var(--foreground)] disabled:opacity-50"
                   title="Clear all picks and unlock"
                 >
-                  Clear picks
+                  Clear
                 </button>
               )}
               <button
                 type="button"
                 onClick={deleteEntry}
                 disabled={pending}
-                className="px-3 py-1 rounded-md text-[var(--rose)] hover:bg-[var(--rose-soft)] text-xs disabled:opacity-50"
+                className="px-3 py-1.5 text-[var(--rose)] uppercase tracking-wider font-bold text-xs hover:text-[var(--foreground)] disabled:opacity-50"
               >
                 Delete
               </button>
@@ -467,7 +466,7 @@ function StudentRow({
       {error && (
         <tr>
           <td colSpan={7} className="px-4 pb-2 pt-0">
-            <div className="rounded-md bg-[var(--rose-soft)] border border-[var(--rose)]/30 px-3 py-1.5 text-xs text-[var(--rose)]">
+            <div className="border-2 border-[var(--rose)] px-3 py-1.5 text-xs text-[var(--rose)] uppercase tracking-wider font-bold">
               {error}
             </div>
           </td>
@@ -488,13 +487,13 @@ function Pill({
   children: React.ReactNode;
 }) {
   const cls = {
-    accent: "bg-[var(--accent-muted)]/40 border-[var(--accent)]/40 text-[var(--accent)]",
-    muted: "bg-[var(--muted)] border-[var(--border-strong)] text-[var(--muted-foreground)]",
-    amber: "bg-[var(--amber-soft)] border-[var(--amber)]/30 text-[var(--amber)]",
-    rose: "bg-[var(--rose-soft)] border-[var(--rose)]/30 text-[var(--rose)]",
+    accent: "border-[var(--accent)] text-[var(--accent)]",
+    muted: "border-[var(--border-strong)] text-[var(--muted-foreground)]",
+    amber: "border-[var(--amber)] text-[var(--amber)]",
+    rose: "border-[var(--rose)] text-[var(--rose)]",
   }[tone];
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] border tracking-wide ${cls}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 text-[9px] uppercase tracking-widest border-2 font-bold ${cls}`}>
       {children}
     </span>
   );

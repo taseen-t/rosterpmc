@@ -1,38 +1,31 @@
 @import "tailwindcss";
 
-/* ─── Serif editorial palette ────────────────────────────────────────────
- * Warm ivory canvas, rich-not-black ink, a single burnished-gold accent.
- * Everything else is restraint: thin warm-gray rules, small-caps labels,
- * generous whitespace. The serif is the soul. */
+/* ─── Kinetic Typography palette ─────────────────────────────────────────
+ * Rich-black canvas, off-white ink, a single acid-yellow accent. High
+ * contrast, sharp corners, brutalist geometry. Everything else is fonts
+ * and motion. */
 
 :root {
   /* Surfaces */
-  --background: #FAFAF8;      /* Ivory canvas — warmer than white */
-  --foreground: #1A1A1A;      /* Rich black, not pure */
-  --muted: #F5F3F0;           /* Secondary surface */
-  --muted-foreground: #6B6B6B;/* Warm secondary text */
-  --card: #FFFFFF;            /* Card surfaces lift from ivory */
+  --background: #09090B;          /* Rich black, not pure */
+  --foreground: #FAFAFA;          /* Off-white, not pure */
+  --muted: #27272A;               /* Dark gray for secondary surfaces */
+  --muted-foreground: #A1A1AA;    /* Zinc 400 — body copy & descriptions */
+  --card: #09090B;                /* Cards = background; depth via borders */
 
   /* Lines */
-  --border: #E8E4DF;          /* Warm gray rules */
-  --border-strong: #D9D3CB;   /* Tables, header bottom */
+  --border: #3F3F46;              /* Zinc 700 — every structural line */
+  --border-strong: #52525B;       /* Zinc 600 — emphasized rules */
 
-  /* Accent — burnished gold */
-  --accent: #B8860B;
-  --accent-soft: #D4A84B;     /* hover, gradient end */
-  --accent-muted: #F2E8C9;    /* gold-tinted background */
-  --accent-foreground: #FFFFFF;
+  /* Accent — acid yellow / lime */
+  --accent: #DFE104;
+  --accent-foreground: #000000;   /* Pure black on accent for max contrast */
+  --accent-soft: #F1F384;         /* Tinted, rarely used */
 
-  /* Status tints — kept editorial, lower saturation, warm */
-  --emerald: #2F6E51;
-  --emerald-soft: #E7EFEA;
-  --amber: #8C6A1A;
-  --amber-soft: #F4ECDA;
-  --rose: #8E2A2A;
-  --rose-soft: #F1E1E1;
-
-  /* Ring */
-  --ring: #B8860B;
+  /* Status tints — kept inside the high-contrast system */
+  --emerald: #22C55E;
+  --rose: #F43F5E;
+  --amber: #F59E0B;
 }
 
 @theme inline {
@@ -44,22 +37,17 @@
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-muted: var(--accent-muted);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
   --color-emerald: var(--emerald);
-  --color-emerald-soft: var(--emerald-soft);
-  --color-amber: var(--amber);
-  --color-amber-soft: var(--amber-soft);
   --color-rose: var(--rose);
-  --color-rose-soft: var(--rose-soft);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-sans-body);
-  --font-mono: var(--font-mono-label);
-  --font-display: var(--font-display-serif);
+  --color-amber: var(--amber);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-space-grotesk);
+  --font-display: var(--font-space-grotesk);
 }
 
-/* ─── Base ─── */
+/* ─── Base ─────────────────────────────────────────────────────────────── */
 
 html {
   background: var(--background);
@@ -68,116 +56,99 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans-body), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
-  letter-spacing: 0.01em;
-  line-height: 1.75;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle paper texture across the whole page — visible only on close
- * inspection, but it kills the flat-screen plastic look. */
-body::before {
-  content: "";
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* ─── Noise overlay — subtle print/poster grain ────────────────────────── */
+
+.noise-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
-  opacity: 0.35;
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(26, 26, 26, 0.04) 1px,
-    transparent 0
-  );
-  background-size: 3px 3px;
+  z-index: 1;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
 }
 
-/* Ambient warm glow — far-off gold halo that anchors the page. */
-body::after {
-  content: "";
-  position: fixed;
-  top: -10rem;
-  left: -10rem;
-  width: 60rem;
-  height: 60rem;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(184, 134, 11, 0.03) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ─── Type utilities ─── */
+/* ─── Type utilities ───────────────────────────────────────────────────── */
 
 .font-display {
-  font-family: var(--font-display-serif), ui-serif, Georgia, serif;
-  font-feature-settings: "ss01", "lnum";
-  letter-spacing: -0.012em;
+  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
+  letter-spacing: -0.04em;
+  line-height: 0.85;
 }
 
-.font-mono-label {
-  font-family: var(--font-mono-label), ui-monospace, monospace;
-  font-feature-settings: "tnum";
-}
-
-/* Small caps label — the signature meta-text treatment. Use sparingly. */
+/* Small uppercase tracked label — the system's micro-text. */
 @utility eyebrow {
-  font-family: var(--font-mono-label), ui-monospace, monospace;
-  font-size: 0.6875rem; /* 11px */
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.75rem;   /* 12px */
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
-/* Same as eyebrow but in gold for "this section is important". */
 @utility eyebrow-accent {
-  font-family: var(--font-mono-label), ui-monospace, monospace;
-  font-size: 0.6875rem;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent);
 }
 
-/* Rule with centered label — editorial section delimiter. */
-@utility section-rule {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* Thin hairline — used as bare horizontal divider. */
+/* Hairline rule. */
 @utility hairline {
   height: 1px;
   background: var(--border);
 }
 
-/* ─── Focus ─── */
+/* ─── Focus ────────────────────────────────────────────────────────────── */
 
 *:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
-/* ─── Horizontal-scroll containers (data tables) ─── */
+/* ─── Horizontal-scroll containers (data tables) ──────────────────────── */
 
 .scrollx {
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-color: var(--border) transparent;
 }
 .scrollx::-webkit-scrollbar {
   height: 8px;
 }
 .scrollx::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 4px;
+  background: var(--border);
+  border-radius: 0;
 }
 
-/* ─── Anchor placement on content ─── */
+/* ─── Content z-stack ──────────────────────────────────────────────────── */
 
 main {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+}
+
+/* ─── Reduced motion ───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

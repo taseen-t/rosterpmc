@@ -1,7 +1,8 @@
 // Group departments into clinical categories so the seat matrix can show
-// a quiet color accent and the user can scan more quickly. In the serif
-// design system we lean on monochrome + a single gold accent, so these
-// chips intentionally stay low-saturation.
+// an accent bar and the user can scan more quickly. In the kinetic design
+// system we stay close to the monochrome + acid-yellow palette — most
+// categories use neutrals, with the accent reserved for "Medicine" since
+// that's the family the public asks about first.
 
 export type Category =
   | "Medicine"
@@ -18,32 +19,32 @@ export const categoryStyle: Record<
   Medicine: {
     label: "Medicine",
     bar: "bg-[var(--accent)]",
-    chip: "bg-[var(--accent-muted)]/40 text-[var(--accent)] border-[var(--accent)]/40",
+    chip: "border-[var(--accent)] text-[var(--accent)] bg-transparent",
   },
   Surgery: {
     label: "Surgery",
     bar: "bg-[var(--foreground)]",
-    chip: "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border-strong)]",
+    chip: "border-[var(--foreground)] text-[var(--foreground)] bg-transparent",
   },
   Gynae: {
     label: "Gynaecology",
     bar: "bg-[var(--rose)]",
-    chip: "bg-[var(--rose-soft)] text-[var(--rose)] border-[var(--rose)]/30",
+    chip: "border-[var(--rose)] text-[var(--rose)] bg-transparent",
   },
   Paediatrics: {
     label: "Paediatrics",
     bar: "bg-[var(--amber)]",
-    chip: "bg-[var(--amber-soft)] text-[var(--amber)] border-[var(--amber)]/30",
+    chip: "border-[var(--amber)] text-[var(--amber)] bg-transparent",
   },
   "Allied Specialty": {
     label: "Allied",
     bar: "bg-[var(--emerald)]",
-    chip: "bg-[var(--emerald-soft)] text-[var(--emerald)] border-[var(--emerald)]/30",
+    chip: "border-[var(--emerald)] text-[var(--emerald)] bg-transparent",
   },
   Diagnostic: {
     label: "Diagnostic",
     bar: "bg-[var(--muted-foreground)]",
-    chip: "bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border-strong)]",
+    chip: "border-[var(--muted-foreground)] text-[var(--muted-foreground)] bg-transparent",
   },
 };
 

@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#14b8a6"/>
-      <stop offset="1" stop-color="#0b3d4f"/>
-    </linearGradient>
-  </defs>
-  <rect width="180" height="180" rx="40" fill="url(#bg)"/>
-  <g transform="translate(40 40)">
-    <path d="M 74.717 50 C 88.371 50 99.444 61.092 99.444 74.764 C 99.444 88.435 88.371 99.526 74.717 99.526 L 25.283 99.526 C 11.629 99.526 0.556 88.435 0.556 74.764 C 0.556 61.092 11.629 50 25.283 50 C 11.629 50 0.556 38.908 0.556 25.236 C 0.556 11.564 11.629 0.473 25.283 0.473 L 74.717 0.473 C 88.371 0.473 99.444 11.564 99.444 25.236 C 99.444 38.908 88.371 50 74.717 50 Z" fill="#ffffff"/>
-  </g>
+  <rect width="180" height="180" fill="#DFE104"/>
+  <!-- Four stacked bars = four three-month rotations. Top bar full-strength,
+       lower three at reduced opacity to imply the rotation cadence. -->
+  <rect x="28" y="34"  width="124" height="20" fill="#000000"/>
+  <rect x="28" y="62"  width="124" height="20" fill="#000000" opacity="0.62"/>
+  <rect x="28" y="90"  width="124" height="20" fill="#000000" opacity="0.62"/>
+  <rect x="28" y="118" width="124" height="20" fill="#000000" opacity="0.62"/>
 </svg>

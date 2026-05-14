@@ -47,16 +47,15 @@ export function MobileNav({ isAdmin }: Props) {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+        className="inline-flex items-center justify-center h-12 w-12 border-2 border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent)] transition-colors"
       >
         <svg
           viewBox="0 0 24 24"
-          className="h-4 w-4"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.6"
+          strokeWidth="2.5"
           strokeLinecap="round"
-          strokeLinejoin="round"
         >
           {open ? (
             <>
@@ -75,16 +74,16 @@ export function MobileNav({ isAdmin }: Props) {
 
       <div
         ref={panelRef}
-        className={`absolute right-0 top-12 w-72 origin-top-right rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-[0_24px_48px_-20px_rgba(26,26,26,0.18)] overflow-hidden transition-all duration-150 ${
+        className={`absolute right-0 top-14 w-72 origin-top-right border-2 border-[var(--border)] bg-[var(--background)] transition-all duration-200 ${
           open
             ? "opacity-100 scale-100 pointer-events-auto"
             : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
-        <nav className="flex flex-col p-3 text-[15px]">
+        <nav className="flex flex-col p-3 text-sm uppercase tracking-wider font-bold">
           <Link
             href="/"
-            className="px-3 py-2.5 rounded-md text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+            className="px-3 py-3 text-[var(--foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors"
           >
             Roster
           </Link>
@@ -93,7 +92,7 @@ export function MobileNav({ isAdmin }: Props) {
             <>
               <Link
                 href="/admin"
-                className="px-3 py-2.5 rounded-md bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--accent)] transition-colors font-medium"
+                className="px-3 py-3 bg-[var(--accent)] text-[var(--accent-foreground)] hover:scale-105 active:scale-95 transition-transform"
               >
                 Admin panel
               </Link>
@@ -103,7 +102,7 @@ export function MobileNav({ isAdmin }: Props) {
                   await logoutAdmin();
                   router.refresh();
                 }}
-                className="mt-1 px-3 py-2.5 rounded-md text-left text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+                className="mt-2 px-3 py-3 text-left text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider font-bold"
               >
                 Sign out
               </button>
@@ -111,7 +110,7 @@ export function MobileNav({ isAdmin }: Props) {
           ) : (
             <Link
               href="/admin/login"
-              className="px-3 py-2.5 rounded-md border border-[var(--foreground)] text-[var(--foreground)] text-center hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors font-medium"
+              className="px-3 py-3 border-2 border-[var(--foreground)] text-[var(--foreground)] text-center hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors"
             >
               Admin login
             </Link>

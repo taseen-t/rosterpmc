@@ -20,9 +20,6 @@ export type RotationEditorStudent = {
 export type DepartmentLoad = {
   name: string;
   capacity: number;
-  // For each rotation: how many seats are currently taken (across all
-  // students — INCLUDING this row's existing picks). The editor backs
-  // those out for its own row so re-saving the same picks isn't blocked.
   filled: number[];
 };
 
@@ -38,13 +35,6 @@ const ROTATION_LABELS: Record<number, string> = {
   4: "Mar – May",
 };
 
-/**
- * Renders four rotation cells for one student plus the finalize/unlock
- * controls. Capacity is checked live: a department option is disabled
- * for a rotation when that rotation is full (excluding the student's
- * own current pick), and disabled across other rotations once already
- * chosen here.
- */
 export function RotationEditor({ student, departments }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -57,7 +47,6 @@ export function RotationEditor({ student, departments }: Props) {
     return m;
   }, [student.picks]);
 
-  // Local edits live in state until the admin clicks Save.
   const [draft, setDraft] = useState<Record<number, string>>(() => ({
     1: initialByRotation.get(1) ?? "",
     2: initialByRotation.get(2) ?? "",
@@ -71,8 +60,6 @@ export function RotationEditor({ student, departments }: Props) {
     draft[3] !== (initialByRotation.get(3) ?? "") ||
     draft[4] !== (initialByRotation.get(4) ?? "");
 
-  // Existing picks for this student, by rotation → department.
-  // Used to back out their own seat count when computing "is this full?"
   const ownByRotation = initialByRotation;
 
   function effectivelyFull(rotation: number, deptName: string): boolean {
@@ -130,8 +117,6 @@ export function RotationEditor({ student, departments }: Props) {
       if (!ok) return;
     }
     start(async () => {
-      // Save first if there are unsaved changes — but only if we have
-      // four picks, since the server only accepts full sets.
       if (dirty && count === 4) {
         const r = await adminSetStudentRotations({
           roll: student.roll_no,
@@ -175,15 +160,14 @@ export function RotationEditor({ student, departments }: Props) {
   const locked = student.submitted;
 
   return (
-    <tr className="align-top">
-      <td colSpan={7} className="px-4 py-5 bg-[var(--muted)]/40 border-t border-[var(--border)]">
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <span className="eyebrow">Rotations · {student.name}</span>
+    <tr>
+      <td colSpan={7} className="px-5 py-6 bg-[var(--muted)]/60 border-t-2 border-[var(--accent)]">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+            <span className="eyebrow-accent">Rotations · {student.name}</span>
             {locked && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] tracking-wide text-[var(--accent)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-                Finalized
+              <span className="inline-flex items-center gap-2 px-2 py-1 bg-[var(--accent)] text-[var(--accent-foreground)] text-[10px] uppercase tracking-widest font-bold">
+                ● Finalized
               </span>
             )}
           </div>
@@ -206,19 +190,19 @@ export function RotationEditor({ student, departments }: Props) {
           </div>
 
           {error && (
-            <div className="rounded-md bg-[var(--rose-soft)] border border-[var(--rose)]/30 px-3 py-2 text-sm text-[var(--rose)]">
+            <div className="border-2 border-[var(--rose)] px-4 py-2.5 text-sm text-[var(--rose)] uppercase tracking-wider font-bold">
               {error}
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="flex flex-wrap items-center gap-3 pt-1">
             {locked ? (
               <>
                 <button
                   type="button"
                   onClick={unlock}
                   disabled={pending}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-[var(--foreground)] text-[var(--foreground)] hover:bg-[var(--foreground)] hover:text-[var(--background)] text-sm font-medium transition-colors disabled:opacity-50"
+                  className="px-5 py-3 border-2 border-[var(--foreground)] text-[var(--foreground)] uppercase tracking-tighter font-bold text-sm hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors disabled:opacity-50"
                 >
                   Unlock to edit
                 </button>
@@ -226,7 +210,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={clearAll}
                   disabled={pending}
-                  className="px-3 py-2 rounded-md text-[var(--rose)] hover:bg-[var(--rose-soft)] text-sm transition-colors disabled:opacity-50"
+                  className="px-3 py-3 text-[var(--rose)] uppercase tracking-widest font-bold text-xs hover:text-[var(--foreground)] disabled:opacity-50"
                 >
                   Clear all picks
                 </button>
@@ -237,7 +221,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={save}
                   disabled={pending || !dirty || pickedCount() !== 4}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--accent)] text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-5 py-3 bg-[var(--foreground)] text-[var(--background)] uppercase tracking-tighter font-bold text-sm hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-[var(--foreground)] disabled:hover:text-[var(--background)]"
                 >
                   {pending ? "Saving…" : "Save draft"}
                 </button>
@@ -245,7 +229,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={finalize}
                   disabled={pending}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] text-sm font-medium transition-colors disabled:opacity-50"
+                  className="px-5 py-3 bg-[var(--accent)] text-[var(--accent-foreground)] uppercase tracking-tighter font-bold text-sm hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100"
                 >
                   Finalize
                 </button>
@@ -253,16 +237,18 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={clearAll}
                   disabled={pending}
-                  className="px-3 py-2 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] text-sm transition-colors disabled:opacity-50"
+                  className="px-3 py-3 text-[var(--muted-foreground)] uppercase tracking-widest font-bold text-xs hover:text-[var(--foreground)] disabled:opacity-50"
                 >
                   Clear
                 </button>
                 {saved === "saved" && (
-                  <span className="text-xs text-[var(--emerald)]">Saved.</span>
+                  <span className="text-xs uppercase tracking-widest font-bold text-[var(--emerald)]">
+                    Saved.
+                  </span>
                 )}
                 {dirty && (
-                  <span className="text-xs text-[var(--muted-foreground)] italic">
-                    Unsaved changes.
+                  <span className="text-xs uppercase tracking-widest text-[var(--accent)]">
+                    Unsaved
                   </span>
                 )}
               </>
@@ -297,9 +283,9 @@ function RotationCell({
 }) {
   return (
     <label className="block">
-      <div className="flex items-baseline justify-between mb-1.5">
+      <div className="flex items-baseline justify-between mb-2">
         <span className="eyebrow text-[10px]">{label}</span>
-        <span className="text-[10px] text-[var(--muted-foreground)] font-mono-label tracking-wide">
+        <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
           {period}
         </span>
       </div>
@@ -307,7 +293,7 @@ function RotationCell({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="w-full rounded-md border border-[var(--border-strong)] bg-[var(--card)] px-3 py-2.5 text-sm text-[var(--foreground)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full border-2 border-[var(--border-strong)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] uppercase tracking-tight font-bold focus:border-[var(--accent)] outline-none disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <option value="">— None —</option>
         {departments.map((d) => {
@@ -321,7 +307,7 @@ function RotationCell({
             ? "— already chosen"
             : full
               ? "— full"
-              : `${remaining} left of ${d.capacity}`;
+              : `${remaining} / ${d.capacity}`;
           return (
             <option
               key={d.name}

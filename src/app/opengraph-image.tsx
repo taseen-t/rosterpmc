@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "House Job Roster · FMU — assigned by merit, published transparently";
+export const alt =
+  "ROSTER · FMU House Job — Assigned by merit. Published live.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -14,59 +15,43 @@ export default async function Image() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          padding: "80px 96px",
-          background: "#FAFAF8",
-          color: "#1A1A1A",
-          fontFamily: "Georgia, serif",
+          padding: "72px 80px",
+          background: "#09090B",
+          color: "#FAFAFA",
+          fontFamily: "system-ui, -apple-system, sans-serif",
           position: "relative",
         }}
       >
-        {/* Decorative paper grain — very subtle */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage:
-              "radial-gradient(rgba(26,26,26,0.04) 1px, transparent 1px)",
-            backgroundSize: "3px 3px",
-            display: "flex",
-          }}
-        />
-
-        {/* Top mark */}
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div
+        {/* Top mark + wordmark */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* Four bars */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ width: 56, height: 7, background: "#DFE104" }} />
+            <div style={{ width: 56, height: 7, background: "#FAFAFA", opacity: 0.55 }} />
+            <div style={{ width: 56, height: 7, background: "#FAFAFA", opacity: 0.55 }} />
+            <div style={{ width: 56, height: 7, background: "#FAFAFA", opacity: 0.55 }} />
+          </div>
+          <span
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: 999,
-              border: "1.5px solid #B8860B",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#B8860B",
-              fontSize: 28,
-              fontFamily: "Georgia, serif",
+              fontSize: 30,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: -1.5,
             }}
           >
-            R
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span
-              style={{
-                fontSize: 14,
-                letterSpacing: 4,
-                textTransform: "uppercase",
-                color: "#6B6B6B",
-                fontFamily: "monospace",
-              }}
-            >
-              Allied Hospital · Faisalabad
-            </span>
-            <span style={{ fontSize: 26, color: "#1A1A1A", marginTop: 2 }}>
-              Roster · FMU
-            </span>
-          </div>
+            Roster
+          </span>
+          <span
+            style={{
+              marginLeft: "auto",
+              fontSize: 14,
+              letterSpacing: 4,
+              textTransform: "uppercase",
+              color: "#A1A1AA",
+            }}
+          >
+            Allied Hospital · Faisalabad
+          </span>
         </div>
 
         {/* Centerpiece */}
@@ -75,6 +60,7 @@ export default async function Image() {
             display: "flex",
             flexDirection: "column",
             marginTop: "auto",
+            marginBottom: 24,
           }}
         >
           <span
@@ -82,58 +68,53 @@ export default async function Image() {
               fontSize: 14,
               letterSpacing: 5,
               textTransform: "uppercase",
-              color: "#B8860B",
-              fontFamily: "monospace",
+              color: "#DFE104",
+              fontWeight: 500,
             }}
           >
-            House Officers · 2026 — 2027
+            House Officers · 2026 / 27
           </span>
           <span
             style={{
               marginTop: 28,
-              fontSize: 92,
-              fontWeight: 400,
-              letterSpacing: -2.4,
-              lineHeight: 1.05,
-              color: "#1A1A1A",
+              fontSize: 144,
+              fontWeight: 700,
+              letterSpacing: -6,
+              lineHeight: 0.85,
+              textTransform: "uppercase",
+              color: "#FAFAFA",
             }}
           >
-            The roster,
-            <br />
-            <span style={{ fontStyle: "italic", color: "#B8860B" }}>
-              composed
-            </span>{" "}
-            by merit.
+            Roster.
           </span>
           <span
             style={{
-              marginTop: 24,
-              fontSize: 22,
-              color: "#6B6B6B",
-              fontFamily: "Georgia, serif",
-              fontStyle: "italic",
-              lineHeight: 1.5,
+              marginTop: 10,
+              fontSize: 96,
+              fontWeight: 700,
+              letterSpacing: -4,
+              lineHeight: 0.85,
+              textTransform: "uppercase",
+              color: "#DFE104",
             }}
           >
-            Four three-month rotations, assigned and finalized by the
-            <br />
-            admin team, published transparently as they&apos;re confirmed.
+            By merit.
           </span>
         </div>
 
-        {/* Footer rule */}
+        {/* Footer band */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginTop: 56,
             paddingTop: 24,
-            borderTop: "1px solid #E8E4DF",
+            borderTop: "2px solid #3F3F46",
             fontSize: 16,
-            color: "#6B6B6B",
-            fontFamily: "monospace",
-            letterSpacing: 1.5,
+            color: "#A1A1AA",
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            fontWeight: 500,
           }}
         >
           <span>4 rotations · 39 departments</span>
