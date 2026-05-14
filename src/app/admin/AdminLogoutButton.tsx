@@ -17,7 +17,7 @@ export function AdminLogoutButton() {
         })
       }
       disabled={pending}
-      className="px-5 py-3 border-2 border-[var(--border-strong)] text-[var(--muted-foreground)] uppercase tracking-tighter font-bold text-sm hover:bg-[var(--foreground)] hover:text-[var(--background)] hover:border-[var(--foreground)] transition-colors disabled:opacity-50"
+      className="px-5 py-2.5 rounded-md bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--dark)] hover:text-[var(--dark-foreground)] hover:scale-105 transition-all duration-200 font-semibold text-sm disabled:opacity-50"
     >
       {pending ? "Signing out…" : "Sign out"}
     </button>

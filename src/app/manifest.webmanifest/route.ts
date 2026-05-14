@@ -15,8 +15,8 @@ export function GET() {
       "Independent allocation roster for FMU House Officers, 2026 to 2027.",
     start_url: "/",
     display: "standalone",
-    background_color: "#09090B",
-    theme_color: "#09090B",
+    background_color: "#FFFFFF",
+    theme_color: "#3B82F6",
     icons: [
       {
         src: "/icon.svg",

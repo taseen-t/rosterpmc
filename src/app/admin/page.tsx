@@ -57,16 +57,14 @@ export default async function AdminPage() {
   const staticStudentMap = new Map(staticStudents.map((s) => [s.roll_no, s]));
 
   return (
-    <div className="mx-auto max-w-[95vw] px-4 md:px-6 py-12 md:py-20 space-y-20">
+    <div className="mx-auto max-w-7xl px-4 md:px-6 py-10 md:py-14 space-y-14">
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
-          <p className="eyebrow-accent">Admin · Roster control</p>
-          <h1 className="mt-4 font-display text-6xl md:text-8xl lg:text-9xl font-bold uppercase tracking-tighter leading-[0.85] text-[var(--foreground)]">
-            Control
-            <br />
-            <span className="text-[var(--accent)]">Panel.</span>
+          <p className="eyebrow-primary">Admin · Roster control</p>
+          <h1 className="mt-3 font-display text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[var(--foreground)] leading-tight">
+            Control panel
           </h1>
-          <p className="mt-6 max-w-2xl text-lg md:text-xl text-[var(--muted-foreground)] leading-tight">
+          <p className="mt-3 max-w-2xl text-base md:text-lg text-[var(--muted-foreground)] leading-relaxed">
             Manage department capacities, edit student records, assign rotation
             picks, and finalize a student&apos;s schedule when their four
             placements are confirmed.
@@ -75,20 +73,20 @@ export default async function AdminPage() {
         <AdminLogoutButton />
       </header>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--border)] border-2 border-[var(--border)]">
-        <Stat label="Students" value={students.length.toString()} />
-        <Stat label="Pass" value={passes.toString()} />
-        <Stat label="Fail" value={fails.toString()} />
-        <Stat label="Finalized" value={finalized.toString()} />
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <StatTile tone="primary" label="Students" value={students.length.toString()} />
+        <StatTile tone="secondary" label="Pass" value={passes.toString()} />
+        <StatTile tone="dark" label="Fail" value={fails.toString()} />
+        <StatTile tone="accent" label="Finalized" value={finalized.toString()} />
       </section>
 
-      <section className="border-2 border-[var(--border)] p-8 md:p-10 flex flex-wrap items-center gap-8">
+      <section className="rounded-lg bg-[var(--muted)] p-6 md:p-8 flex flex-wrap items-center gap-6">
         <div className="flex-1 min-w-0">
-          <p className="eyebrow-accent">Export</p>
-          <h3 className="mt-2 font-display text-3xl md:text-4xl font-bold uppercase tracking-tighter text-[var(--foreground)]">
+          <p className="eyebrow-primary">Export</p>
+          <h3 className="mt-2 font-display text-2xl md:text-3xl font-bold text-[var(--foreground)] tracking-tight">
             Download spreadsheet
           </h3>
-          <p className="text-sm md:text-base text-[var(--muted-foreground)] mt-2 leading-tight">
+          <p className="text-sm md:text-base text-[var(--muted-foreground)] mt-2 leading-relaxed">
             Every passed candidate with merit rank and four assigned rotations.
             Generated fresh on click.
           </p>
@@ -96,7 +94,7 @@ export default async function AdminPage() {
         <a
           href="/api/export.xlsx"
           download
-          className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--accent)] text-[var(--accent-foreground)] uppercase tracking-tighter font-bold text-base md:text-lg hover:scale-105 active:scale-95 transition-transform"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-strong)] hover:scale-105 transition-all duration-200 font-semibold"
         >
           Export .xlsx
         </a>
@@ -108,18 +106,18 @@ export default async function AdminPage() {
           title="Capacity"
           subtitle="Each department holds this many House Officers per 3-month rotation. Click a number to edit."
         />
-        <div className="mt-10 border-2 border-[var(--border)] overflow-hidden">
+        <div className="mt-8 rounded-lg bg-[var(--background)] overflow-hidden border border-[var(--border)]">
           <div className="scrollx">
             <table className="min-w-full text-sm">
-              <thead className="bg-[var(--muted)] eyebrow">
+              <thead className="bg-[var(--muted)]">
                 <tr>
-                  <th className="text-left px-5 py-4 font-bold uppercase tracking-widest">Department</th>
-                  <th className="text-center px-5 py-4 font-bold uppercase tracking-widest">Capacity</th>
-                  <th className="text-center px-5 py-4 font-bold uppercase tracking-widest">Original</th>
+                  <th className="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Department</th>
+                  <th className="text-center px-5 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Capacity</th>
+                  <th className="text-center px-5 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Original</th>
                   <th className="px-5 py-4" />
                 </tr>
               </thead>
-              <tbody className="divide-y-2 divide-[var(--border)]">
+              <tbody className="divide-y divide-[var(--border)]">
                 {departments.map((d) => (
                   <CapacityEditor
                     key={d.name}
@@ -135,7 +133,7 @@ export default async function AdminPage() {
       </section>
 
       <section>
-        <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
+        <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
           <SectionHeader
             eyebrow="Students & rotations"
             title="Roster"
@@ -171,22 +169,40 @@ function SectionHeader({
 }) {
   return (
     <div>
-      <p className="eyebrow-accent">{eyebrow}</p>
-      <h2 className="mt-3 font-display text-4xl md:text-6xl font-bold uppercase tracking-tighter leading-[0.9] text-[var(--foreground)]">
-        {title}.
+      <p className="eyebrow-primary">{eyebrow}</p>
+      <h2 className="mt-2 font-display text-3xl md:text-4xl font-extrabold tracking-tight text-[var(--foreground)]">
+        {title}
       </h2>
-      <p className="text-sm md:text-base text-[var(--muted-foreground)] mt-3 max-w-2xl leading-tight">
+      <p className="text-sm md:text-base text-[var(--muted-foreground)] mt-2 max-w-2xl leading-relaxed">
         {subtitle}
       </p>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function StatTile({
+  tone,
+  label,
+  value,
+}: {
+  tone: "primary" | "secondary" | "accent" | "dark";
+  label: string;
+  value: string;
+}) {
+  const cls = {
+    primary: "bg-[var(--primary)] text-[var(--primary-foreground)]",
+    secondary: "bg-[var(--secondary)] text-[var(--secondary-foreground)]",
+    accent: "bg-[var(--accent)] text-[var(--accent-foreground)]",
+    dark: "bg-[var(--dark)] text-[var(--dark-foreground)]",
+  }[tone];
   return (
-    <div className="bg-[var(--background)] px-6 py-8 md:py-10">
-      <p className="eyebrow">{label}</p>
-      <p className="mt-3 font-display text-4xl md:text-6xl font-bold uppercase tracking-tighter tabular-nums leading-[0.85] text-[var(--foreground)]">
+    <div
+      className={`rounded-lg ${cls} p-6 md:p-7 transition-all duration-200 hover:scale-[1.02]`}
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wider opacity-80">
+        {label}
+      </p>
+      <p className="mt-3 font-display text-4xl md:text-5xl font-extrabold tabular-nums tracking-tight leading-none">
         {value}
       </p>
     </div>

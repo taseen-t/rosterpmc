@@ -47,7 +47,7 @@ export function MobileNav({ isAdmin }: Props) {
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center justify-center h-12 w-12 border-2 border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent)] transition-colors"
+        className="inline-flex items-center justify-center h-11 w-11 rounded-md bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-200"
       >
         <svg
           viewBox="0 0 24 24"
@@ -74,16 +74,16 @@ export function MobileNav({ isAdmin }: Props) {
 
       <div
         ref={panelRef}
-        className={`absolute right-0 top-14 w-72 origin-top-right border-2 border-[var(--border)] bg-[var(--background)] transition-all duration-200 ${
+        className={`absolute right-0 top-14 w-72 origin-top-right rounded-lg bg-[var(--background)] border border-[var(--border)] transition-all duration-200 ${
           open
             ? "opacity-100 scale-100 pointer-events-auto"
             : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
-        <nav className="flex flex-col p-3 text-sm uppercase tracking-wider font-bold">
+        <nav className="flex flex-col p-3 text-sm font-medium">
           <Link
             href="/"
-            className="px-3 py-3 text-[var(--foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors"
+            className="px-3 py-3 rounded-md text-[var(--foreground)] hover:bg-[var(--muted)] transition-all duration-200"
           >
             Roster
           </Link>
@@ -92,7 +92,7 @@ export function MobileNav({ isAdmin }: Props) {
             <>
               <Link
                 href="/admin"
-                className="px-3 py-3 bg-[var(--accent)] text-[var(--accent-foreground)] hover:scale-105 active:scale-95 transition-transform"
+                className="px-3 py-3 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-strong)] hover:scale-[1.02] transition-all duration-200 font-semibold"
               >
                 Admin panel
               </Link>
@@ -102,7 +102,7 @@ export function MobileNav({ isAdmin }: Props) {
                   await logoutAdmin();
                   router.refresh();
                 }}
-                className="mt-2 px-3 py-3 text-left text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider font-bold"
+                className="mt-2 px-3 py-3 rounded-md text-left text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200"
               >
                 Sign out
               </button>
@@ -110,7 +110,7 @@ export function MobileNav({ isAdmin }: Props) {
           ) : (
             <Link
               href="/admin/login"
-              className="px-3 py-3 border-2 border-[var(--foreground)] text-[var(--foreground)] text-center hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors"
+              className="px-3 py-3 rounded-md border-4 border-[var(--primary)] text-[var(--primary)] text-center hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-200 font-semibold"
             >
               Admin login
             </Link>

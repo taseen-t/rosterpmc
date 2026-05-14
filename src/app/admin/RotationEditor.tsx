@@ -161,13 +161,14 @@ export function RotationEditor({ student, departments }: Props) {
 
   return (
     <tr>
-      <td colSpan={7} className="px-5 py-6 bg-[var(--muted)]/60 border-t-2 border-[var(--accent)]">
+      <td colSpan={7} className="px-5 py-6 bg-[var(--muted)]">
         <div className="space-y-4">
           <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-            <span className="eyebrow-accent">Rotations · {student.name}</span>
+            <p className="eyebrow-primary">Rotations · {student.name}</p>
             {locked && (
-              <span className="inline-flex items-center gap-2 px-2 py-1 bg-[var(--accent)] text-[var(--accent-foreground)] text-[10px] uppercase tracking-widest font-bold">
-                ● Finalized
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                Finalized
               </span>
             )}
           </div>
@@ -190,7 +191,7 @@ export function RotationEditor({ student, departments }: Props) {
           </div>
 
           {error && (
-            <div className="border-2 border-[var(--rose)] px-4 py-2.5 text-sm text-[var(--rose)] uppercase tracking-wider font-bold">
+            <div className="rounded-md bg-red-50 text-red-700 px-4 py-2.5 text-sm font-medium">
               {error}
             </div>
           )}
@@ -202,7 +203,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={unlock}
                   disabled={pending}
-                  className="px-5 py-3 border-2 border-[var(--foreground)] text-[var(--foreground)] uppercase tracking-tighter font-bold text-sm hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-md border-4 border-[var(--foreground)] text-[var(--foreground)] hover:bg-[var(--foreground)] hover:text-[var(--background)] hover:scale-105 transition-all duration-200 font-semibold text-sm disabled:opacity-50"
                 >
                   Unlock to edit
                 </button>
@@ -210,7 +211,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={clearAll}
                   disabled={pending}
-                  className="px-3 py-3 text-[var(--rose)] uppercase tracking-widest font-bold text-xs hover:text-[var(--foreground)] disabled:opacity-50"
+                  className="px-3 py-2.5 rounded-md text-[var(--danger)] hover:bg-red-50 hover:scale-105 transition-all duration-200 font-semibold text-xs disabled:opacity-50"
                 >
                   Clear all picks
                 </button>
@@ -221,7 +222,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={save}
                   disabled={pending || !dirty || pickedCount() !== 4}
-                  className="px-5 py-3 bg-[var(--foreground)] text-[var(--background)] uppercase tracking-tighter font-bold text-sm hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-[var(--foreground)] disabled:hover:text-[var(--background)]"
+                  className="px-5 py-2.5 rounded-md bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--primary)] hover:scale-105 transition-all duration-200 font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {pending ? "Saving…" : "Save draft"}
                 </button>
@@ -229,7 +230,7 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={finalize}
                   disabled={pending}
-                  className="px-5 py-3 bg-[var(--accent)] text-[var(--accent-foreground)] uppercase tracking-tighter font-bold text-sm hover:scale-105 active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                  className="px-5 py-2.5 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-strong)] hover:scale-105 transition-all duration-200 font-semibold text-sm disabled:opacity-50 disabled:hover:scale-100"
                 >
                   Finalize
                 </button>
@@ -237,17 +238,17 @@ export function RotationEditor({ student, departments }: Props) {
                   type="button"
                   onClick={clearAll}
                   disabled={pending}
-                  className="px-3 py-3 text-[var(--muted-foreground)] uppercase tracking-widest font-bold text-xs hover:text-[var(--foreground)] disabled:opacity-50"
+                  className="px-3 py-2.5 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--background)] hover:text-[var(--foreground)] transition-all duration-200 font-semibold text-xs disabled:opacity-50"
                 >
                   Clear
                 </button>
                 {saved === "saved" && (
-                  <span className="text-xs uppercase tracking-widest font-bold text-[var(--emerald)]">
+                  <span className="text-xs font-semibold text-[var(--secondary)]">
                     Saved.
                   </span>
                 )}
                 {dirty && (
-                  <span className="text-xs uppercase tracking-widest text-[var(--accent)]">
+                  <span className="text-xs font-semibold text-[var(--primary)]">
                     Unsaved
                   </span>
                 )}
@@ -283,17 +284,17 @@ function RotationCell({
 }) {
   return (
     <label className="block">
-      <div className="flex items-baseline justify-between mb-2">
-        <span className="eyebrow text-[10px]">{label}</span>
-        <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
-          {period}
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+          {label}
         </span>
+        <span className="text-[10px] text-[var(--muted-foreground)]">{period}</span>
       </div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="w-full border-2 border-[var(--border-strong)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] uppercase tracking-tight font-bold focus:border-[var(--accent)] outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full rounded-md bg-[var(--background)] border-2 border-transparent focus:border-[var(--primary)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <option value="">— None —</option>
         {departments.map((d) => {
@@ -307,7 +308,7 @@ function RotationCell({
             ? "— already chosen"
             : full
               ? "— full"
-              : `${remaining} / ${d.capacity}`;
+              : `${remaining} left of ${d.capacity}`;
           return (
             <option
               key={d.name}

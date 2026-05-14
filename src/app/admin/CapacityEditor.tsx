@@ -39,10 +39,8 @@ export function CapacityEditor({
   }
 
   return (
-    <tr className="hover:bg-[var(--muted)] transition-colors">
-      <td className="px-5 py-3.5 text-[var(--foreground)] uppercase tracking-tight font-bold">
-        {name}
-      </td>
+    <tr className="hover:bg-[var(--muted)]/50 transition-colors">
+      <td className="px-5 py-3.5 text-[var(--foreground)] font-medium">{name}</td>
       <td className="px-5 py-3.5 text-center">
         {editing ? (
           <div className="inline-flex items-center gap-2">
@@ -51,13 +49,13 @@ export function CapacityEditor({
               min={0}
               value={value}
               onChange={(e) => setValue(Number(e.target.value))}
-              className="w-20 border-2 border-[var(--border)] bg-transparent px-2 py-1.5 text-center font-bold tabular-nums focus:border-[var(--accent)] outline-none text-[var(--foreground)]"
+              className="w-20 rounded-md bg-[var(--muted)] focus:bg-[var(--background)] border-2 border-transparent focus:border-[var(--primary)] px-2 py-1.5 text-center font-semibold tabular-nums outline-none transition-all duration-200"
             />
             <button
               type="button"
               onClick={save}
               disabled={pending}
-              className="px-3 py-1.5 bg-[var(--accent)] text-[var(--accent-foreground)] uppercase tracking-tighter font-bold text-xs hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
+              className="px-3 py-1.5 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-strong)] hover:scale-105 transition-all duration-200 font-semibold text-xs disabled:opacity-50"
             >
               Save
             </button>
@@ -67,7 +65,7 @@ export function CapacityEditor({
                 setEditing(false);
                 setValue(capacity);
               }}
-              className="px-3 py-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] uppercase tracking-wider text-xs"
+              className="px-3 py-1.5 rounded-md text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200 text-xs"
             >
               Cancel
             </button>
@@ -79,17 +77,17 @@ export function CapacityEditor({
               setEditing(true);
               setValue(capacity);
             }}
-            className={`inline-flex items-center justify-center w-16 h-9 border-2 font-bold tabular-nums text-base transition-colors ${
+            className={`inline-flex items-center justify-center w-16 h-9 rounded-md font-semibold tabular-nums text-base transition-all duration-200 ${
               overridden
-                ? "border-[var(--accent)] text-[var(--accent)] bg-transparent"
-                : "border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--foreground)] hover:text-[var(--background)] hover:border-[var(--foreground)]"
-            }`}
+                ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)]"
+            } hover:scale-105`}
           >
             {capacity}
           </button>
         )}
       </td>
-      <td className="px-5 py-3.5 text-center text-[var(--muted-foreground)] tabular-nums font-bold">
+      <td className="px-5 py-3.5 text-center text-[var(--muted-foreground)] tabular-nums font-medium">
         {original}
       </td>
       <td className="px-5 py-3.5 text-right">
@@ -98,9 +96,9 @@ export function CapacityEditor({
             type="button"
             onClick={clearOverride}
             disabled={pending}
-            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--rose)] uppercase tracking-widest disabled:opacity-50"
+            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--danger)] font-semibold disabled:opacity-50 transition-colors"
           >
-            Reset
+            Reset to original
           </button>
         )}
       </td>

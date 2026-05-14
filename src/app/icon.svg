@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <rect width="32" height="32" fill="#DFE104"/>
-  <!-- Four stacked bars = four three-month rotations. Top bar full-strength,
-       lower three at reduced opacity so the scale reads even at 16x16. -->
-  <rect x="5" y="6"  width="22" height="3.2" fill="#000000"/>
-  <rect x="5" y="11" width="22" height="3.2" fill="#000000" opacity="0.62"/>
-  <rect x="5" y="16" width="22" height="3.2" fill="#000000" opacity="0.62"/>
-  <rect x="5" y="21" width="22" height="3.2" fill="#000000" opacity="0.62"/>
+  <rect width="32" height="32" rx="6" fill="#FFFFFF"/>
+  <!-- Four stacked bars = four rotations. Top bar in primary blue,
+       the rest in gray-400 so #1 reads first. Slightly rounded ends
+       to match the flat-design 6–8px radius language. -->
+  <rect x="5" y="6"  width="22" height="3.4" rx="1.2" fill="#3B82F6"/>
+  <rect x="5" y="11" width="22" height="3.4" rx="1.2" fill="#9CA3AF"/>
+  <rect x="5" y="16" width="22" height="3.4" rx="1.2" fill="#9CA3AF"/>
+  <rect x="5" y="21" width="22" height="3.4" rx="1.2" fill="#9CA3AF"/>
 </svg>

@@ -1,8 +1,8 @@
 // Group departments into clinical categories so the seat matrix can show
-// an accent bar and the user can scan more quickly. In the kinetic design
-// system we stay close to the monochrome + acid-yellow palette — most
-// categories use neutrals, with the accent reserved for "Medicine" since
-// that's the family the public asks about first.
+// a colored accent and a flat soft-tint chip. Categories use a small,
+// disciplined palette built around the design system's blue/emerald/
+// amber/gray-900 with rose for Gynae as the one outlier (visible across
+// the system's neutrals).
 
 export type Category =
   | "Medicine"
@@ -18,33 +18,33 @@ export const categoryStyle: Record<
 > = {
   Medicine: {
     label: "Medicine",
-    bar: "bg-[var(--accent)]",
-    chip: "border-[var(--accent)] text-[var(--accent)] bg-transparent",
+    bar: "bg-blue-500",
+    chip: "bg-blue-50 text-blue-700",
   },
   Surgery: {
     label: "Surgery",
-    bar: "bg-[var(--foreground)]",
-    chip: "border-[var(--foreground)] text-[var(--foreground)] bg-transparent",
+    bar: "bg-gray-900",
+    chip: "bg-gray-100 text-gray-900",
   },
   Gynae: {
     label: "Gynaecology",
-    bar: "bg-[var(--rose)]",
-    chip: "border-[var(--rose)] text-[var(--rose)] bg-transparent",
+    bar: "bg-rose-500",
+    chip: "bg-rose-50 text-rose-700",
   },
   Paediatrics: {
     label: "Paediatrics",
-    bar: "bg-[var(--amber)]",
-    chip: "border-[var(--amber)] text-[var(--amber)] bg-transparent",
+    bar: "bg-amber-500",
+    chip: "bg-amber-50 text-amber-700",
   },
   "Allied Specialty": {
     label: "Allied",
-    bar: "bg-[var(--emerald)]",
-    chip: "border-[var(--emerald)] text-[var(--emerald)] bg-transparent",
+    bar: "bg-emerald-500",
+    chip: "bg-emerald-50 text-emerald-700",
   },
   Diagnostic: {
     label: "Diagnostic",
-    bar: "bg-[var(--muted-foreground)]",
-    chip: "border-[var(--muted-foreground)] text-[var(--muted-foreground)] bg-transparent",
+    bar: "bg-gray-400",
+    chip: "bg-gray-100 text-gray-600",
   },
 };
 

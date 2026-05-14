@@ -21,28 +21,28 @@ export function AdminLoginForm() {
           else router.refresh();
         });
       }}
-      className="space-y-6"
+      className="space-y-5"
     >
       <label className="block">
-        <span className="eyebrow">Password</span>
+        <span className="text-xs font-semibold text-[var(--foreground)]">Password</span>
         <input
           id="password"
           name="password"
           type="password"
           autoFocus
           required
-          className="mt-3 w-full border-b-2 border-[var(--border-strong)] bg-transparent px-0 py-3 text-3xl md:text-4xl font-bold uppercase tracking-tighter text-[var(--foreground)] focus:border-[var(--accent)] outline-none"
+          className="mt-2 w-full rounded-md bg-[var(--muted)] focus:bg-[var(--background)] border-2 border-transparent focus:border-[var(--primary)] px-3.5 py-3 text-[var(--foreground)] outline-none transition-all duration-200"
         />
       </label>
       {error && (
-        <div className="border-2 border-[var(--rose)] px-4 py-3 text-sm text-[var(--rose)] uppercase tracking-wider font-bold">
+        <div className="rounded-md bg-red-50 text-red-700 px-3 py-2 text-sm font-medium">
           {error}
         </div>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="w-full inline-flex justify-center items-center px-4 py-4 bg-[var(--accent)] text-[var(--accent-foreground)] uppercase tracking-tighter font-bold text-base md:text-lg hover:scale-105 active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+        className="w-full inline-flex justify-center items-center rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-strong)] hover:scale-105 transition-all duration-200 font-semibold px-4 py-3 disabled:opacity-60 disabled:hover:scale-100"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

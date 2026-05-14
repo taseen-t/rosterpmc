@@ -1,31 +1,53 @@
 @import "tailwindcss";
 
-/* ─── Kinetic Typography palette ─────────────────────────────────────────
- * Rich-black canvas, off-white ink, a single acid-yellow accent. High
- * contrast, sharp corners, brutalist geometry. Everything else is fonts
- * and motion. */
+/* ─── Flat Design palette ────────────────────────────────────────────────
+ * Pure white canvas, sharp gray-900 ink. One primary blue for action,
+ * supporting emerald + amber accents for category color-blocking. Solid
+ * blocks of color define structure — no shadows, no gradients on
+ * elements, no artificial depth. Hierarchy comes from size + color +
+ * weight, period. */
 
 :root {
   /* Surfaces */
-  --background: #09090B;          /* Rich black, not pure */
-  --foreground: #FAFAFA;          /* Off-white, not pure */
-  --muted: #27272A;               /* Dark gray for secondary surfaces */
-  --muted-foreground: #A1A1AA;    /* Zinc 400 — body copy & descriptions */
-  --card: #09090B;                /* Cards = background; depth via borders */
+  --background: #FFFFFF;             /* Pure white canvas */
+  --foreground: #111827;             /* Gray 900 — high-contrast text */
+  --muted: #F3F4F6;                  /* Gray 100 — secondary surfaces */
+  --muted-foreground: #6B7280;       /* Gray 500 — secondary text */
+  --card: #FFFFFF;                   /* Cards on white = pure white */
 
   /* Lines */
-  --border: #3F3F46;              /* Zinc 700 — every structural line */
-  --border-strong: #52525B;       /* Zinc 600 — emphasized rules */
+  --border: #E5E7EB;                 /* Gray 200 — used sparingly */
+  --border-strong: #D1D5DB;          /* Gray 300 — emphasized */
 
-  /* Accent — acid yellow / lime */
-  --accent: #DFE104;
-  --accent-foreground: #000000;   /* Pure black on accent for max contrast */
-  --accent-soft: #F1F384;         /* Tinted, rarely used */
+  /* Primary action */
+  --primary: #3B82F6;                /* Blue 500 */
+  --primary-strong: #2563EB;         /* Blue 600 — hover */
+  --primary-soft: #DBEAFE;           /* Blue 100 — tinted bg */
+  --primary-foreground: #FFFFFF;
 
-  /* Status tints — kept inside the high-contrast system */
-  --emerald: #22C55E;
-  --rose: #F43F5E;
-  --amber: #F59E0B;
+  /* Secondary accent */
+  --secondary: #10B981;              /* Emerald 500 */
+  --secondary-strong: #059669;       /* Emerald 600 */
+  --secondary-soft: #D1FAE5;         /* Emerald 100 */
+  --secondary-foreground: #FFFFFF;
+
+  /* Highlight / warning */
+  --accent: #F59E0B;                 /* Amber 500 */
+  --accent-strong: #D97706;          /* Amber 600 */
+  --accent-soft: #FEF3C7;             /* Amber 100 */
+  --accent-foreground: #FFFFFF;
+
+  /* Status — danger */
+  --danger: #EF4444;                 /* Red 500 */
+  --danger-soft: #FEE2E2;            /* Red 100 */
+
+  /* Dark surface — used for footer + dark sections */
+  --dark: #111827;                   /* Gray 900 */
+  --dark-foreground: #F9FAFB;        /* Gray 50 */
+  --dark-muted: #374151;             /* Gray 700 */
+
+  /* Ring (focus) */
+  --ring: #3B82F6;
 }
 
 @theme inline {
@@ -36,15 +58,26 @@
   --color-card: var(--card);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-strong: var(--secondary-strong);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
-  --color-emerald: var(--emerald);
-  --color-rose: var(--rose);
-  --color-amber: var(--amber);
-  --font-sans: var(--font-space-grotesk);
-  --font-mono: var(--font-space-grotesk);
-  --font-display: var(--font-space-grotesk);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-dark: var(--dark);
+  --color-dark-foreground: var(--dark-foreground);
+  --color-dark-muted: var(--dark-muted);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-outfit);
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────── */
@@ -56,56 +89,43 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
-  font-feature-settings: "ss01", "cv11";
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-feature-settings: "ss01", "ss02";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: var(--accent);
-  color: var(--accent-foreground);
-}
-
-/* ─── Noise overlay — subtle print/poster grain ────────────────────────── */
-
-.noise-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.03;
-  mix-blend-mode: overlay;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 /* ─── Type utilities ───────────────────────────────────────────────────── */
 
 .font-display {
-  font-family: var(--font-space-grotesk), "Inter", system-ui, sans-serif;
-  letter-spacing: -0.04em;
-  line-height: 0.85;
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  font-feature-settings: "ss01";
 }
 
-/* Small uppercase tracked label — the system's micro-text. */
+/* Small uppercase tracked label — used for section eyebrows. */
 @utility eyebrow {
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;
-  font-size: 0.75rem;   /* 12px */
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
-@utility eyebrow-accent {
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+@utility eyebrow-primary {
   font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--primary);
 }
 
-/* Hairline rule. */
+/* Thin hairline. Only used in places the spec explicitly allows. */
 @utility hairline {
   height: 1px;
   background: var(--border);
@@ -114,9 +134,9 @@ body {
 /* ─── Focus ────────────────────────────────────────────────────────────── */
 
 *:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 0;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+  border-radius: 6px;
 }
 
 /* ─── Horizontal-scroll containers (data tables) ──────────────────────── */
@@ -124,21 +144,14 @@ body {
 .scrollx {
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 .scrollx::-webkit-scrollbar {
   height: 8px;
 }
 .scrollx::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 0;
-}
-
-/* ─── Content z-stack ──────────────────────────────────────────────────── */
-
-main {
-  position: relative;
-  z-index: 2;
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 
 /* ─── Reduced motion ───────────────────────────────────────────────────── */
