@@ -2,23 +2,25 @@ import type { UnitBreakdownRow, UnitStudent } from "@/lib/units";
 import { categoryStyle } from "@/lib/categories";
 
 /**
- * Per-unit accordion view: every department gets a row, click to expand
- * into its four-rotation roster. Uses native <details>/<summary> so it
- * works without JS — important since this is rendered as a server
- * component and we don't want to ship state for purely-display content.
+ * Per-unit allocation tables, in the format used by the official roster
+ * document: centered unit name, then a single 9-column table where each
+ * row counts as Sr. No., paired with (Merit No., Name) for each of the
+ * four rotations. Each rotation column is independently sorted by merit
+ * rank — row #1 across columns is *not* the same student, just the
+ * top-ranked person assigned to this unit in each rotation.
  *
- * Each finalized student in the expanded panel shows their merit rank,
- * name, roll number, and a tiny 4-cell rotation strip with the rotation
- * that placed them in *this* unit highlighted in the unit's category color.
+ * Wrapped in <details>/<summary> per-unit so 39 tables don't all
+ * unfold at once; the summary acts as the centered formal header and
+ * also the click target.
  */
 export function UnitBreakdown({ units }: { units: UnitBreakdownRow[] }) {
   return (
-    <div className="rounded-lg bg-[var(--background)] border border-[var(--border)] overflow-hidden divide-y divide-[var(--border)]">
+    <div className="space-y-6">
       {units.map((u) => (
-        <UnitRow key={u.name} unit={u} />
+        <UnitTable key={u.name} unit={u} />
       ))}
       {units.length === 0 && (
-        <div className="px-5 py-8 text-center text-[var(--muted-foreground)] text-sm">
+        <div className="rounded-lg bg-[var(--background)] border border-[var(--border)] px-5 py-8 text-center text-[var(--muted-foreground)] text-sm">
           No departments configured.
         </div>
       )}
@@ -26,45 +28,33 @@ export function UnitBreakdown({ units }: { units: UnitBreakdownRow[] }) {
   );
 }
 
-function UnitRow({ unit }: { unit: UnitBreakdownRow }) {
+function UnitTable({ unit }: { unit: UnitBreakdownRow }) {
   const style = categoryStyle[unit.category];
   const totalSeats = unit.capacity * 4;
-  const fillRatio = totalSeats === 0 ? 0 : unit.totalFinalized / totalSeats;
+  // Match the screenshot's row pattern: as many rows as the rotation
+  // with the most students. Empty cells where a rotation has fewer.
+  const maxRows = Math.max(
+    0,
+    ...unit.byRotation.map((r) => r.students.length),
+  );
+
   return (
-    <details className="group">
-      <summary className="cursor-pointer flex flex-wrap items-center gap-3 md:gap-4 px-4 md:px-5 py-4 hover:bg-[var(--muted)]/40 transition-colors list-none">
-        {/* category bar */}
-        <span aria-hidden className={`w-1.5 self-stretch ${style.bar} rounded-r-sm`} />
+    <details className="group rounded-lg bg-[var(--background)] border border-[var(--border)] overflow-hidden">
+      <summary className="cursor-pointer list-none relative px-6 py-6 hover:bg-[var(--muted)]/40 transition-colors text-center">
+        {/* Subtle category bar pinned to the top of the card. */}
+        <span aria-hidden className={`absolute inset-x-0 top-0 h-1 ${style.bar}`} />
 
-        {/* unit name + category eyebrow */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            <span className="font-semibold text-[var(--foreground)]">
-              {unit.name}
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-              {style.label}
-            </span>
-          </div>
-        </div>
+        <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--foreground)]">
+          {unit.name}
+        </h3>
+        <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+          {style.label} · {unit.totalFinalized} of {totalSeats} finalized
+        </p>
 
-        {/* fill summary */}
-        <span
-          className={`text-xs font-semibold tabular-nums px-2.5 py-1 rounded-md ${
-            fillRatio >= 1
-              ? "bg-emerald-50 text-emerald-700"
-              : fillRatio >= 0.5
-                ? "bg-blue-50 text-blue-700"
-                : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {unit.totalFinalized} / {totalSeats} finalized
-        </span>
-
-        {/* chevron */}
+        {/* Bottom-right chevron — small, rotates open. */}
         <span
           aria-hidden
-          className="text-[var(--muted-foreground)] transition-transform duration-200 group-open:rotate-180"
+          className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] transition-transform duration-200 group-open:rotate-180"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -78,142 +68,107 @@ function UnitRow({ unit }: { unit: UnitBreakdownRow }) {
         </span>
       </summary>
 
-      <div className="px-4 md:px-5 pb-6 pt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-[var(--muted)]/30">
-        {unit.byRotation.map(({ rotation, students }) => (
-          <RotationColumn
-            key={rotation}
-            rotation={rotation}
-            students={students}
-            capacity={unit.capacity}
-            unitName={unit.name}
-          />
-        ))}
+      <div className="border-t border-[var(--border)] scrollx">
+        {maxRows === 0 ? (
+          <p className="px-6 py-10 text-center text-[var(--muted-foreground)] text-sm">
+            No finalized placements yet.
+          </p>
+        ) : (
+          <AllocationTable unit={unit} maxRows={maxRows} />
+        )}
       </div>
     </details>
   );
 }
 
-const ROTATION_PERIODS: Record<number, string> = {
-  1: "Jun – Aug",
-  2: "Sep – Nov",
-  3: "Dec – Feb",
-  4: "Mar – May",
+function AllocationTable({
+  unit,
+  maxRows,
+}: {
+  unit: UnitBreakdownRow;
+  maxRows: number;
+}) {
+  return (
+    <table className="min-w-full border-collapse text-sm">
+      <thead>
+        <tr className="bg-[var(--muted)] text-[var(--muted-foreground)]">
+          <th className="border border-[var(--border)] px-3 py-3 text-xs font-semibold uppercase tracking-wider text-center">
+            Sr. No.
+          </th>
+          {[1, 2, 3, 4].map((rot) => (
+            <RotationHeadGroup key={rot} rotation={rot} />
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: maxRows }, (_, i) => (
+          <AllocationRow
+            key={i}
+            srNo={i + 1}
+            rows={unit.byRotation.map((r) => r.students[i])}
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+const ORDINAL: Record<number, string> = {
+  1: "1st",
+  2: "2nd",
+  3: "3rd",
+  4: "4th",
 };
 
-function RotationColumn({
-  rotation,
-  students,
-  capacity,
-  unitName,
-}: {
-  rotation: number;
-  students: UnitStudent[];
-  capacity: number;
-  unitName: string;
-}) {
+function RotationHeadGroup({ rotation }: { rotation: number }) {
   return (
-    <div className="rounded-md bg-[var(--background)] p-4 border border-[var(--border)]">
-      <div className="flex items-baseline justify-between mb-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--primary)]">
-          Rotation {rotation}
-        </p>
-        <p className="text-[10px] font-medium text-[var(--muted-foreground)] tabular-nums">
-          {students.length} / {capacity}
-        </p>
-      </div>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted-foreground)] mb-3">
-        {ROTATION_PERIODS[rotation]}
-      </p>
-
-      {students.length === 0 ? (
-        <p className="text-sm text-[var(--muted-foreground)]">—</p>
-      ) : (
-        <ul className="space-y-3">
-          {students.map((s) => (
-            <StudentCard
-              key={s.roll_no}
-              student={s}
-              currentUnit={unitName}
-              currentRotation={rotation}
-            />
-          ))}
-        </ul>
-      )}
-    </div>
+    <>
+      <th className="border border-[var(--border)] px-3 py-3 text-xs font-semibold uppercase tracking-wider text-center">
+        Merit No.
+      </th>
+      <th className="border border-[var(--border)] px-3 py-3 text-xs font-semibold uppercase tracking-wider text-left whitespace-nowrap">
+        {ORDINAL[rotation]} Rotation
+      </th>
+    </>
   );
 }
 
-function StudentCard({
-  student,
-  currentUnit,
-  currentRotation,
+function AllocationRow({
+  srNo,
+  rows,
 }: {
-  student: UnitStudent;
-  currentUnit: string;
-  currentRotation: number;
+  srNo: number;
+  rows: (UnitStudent | undefined)[];
 }) {
   return (
-    <li className="space-y-1.5">
-      <div className="flex items-baseline gap-2">
-        <span className="inline-flex items-center justify-center min-w-[1.75rem] h-5 px-1.5 rounded text-[10px] font-bold tabular-nums bg-[var(--muted)] text-[var(--foreground)]">
-          {student.rank ?? "—"}
-        </span>
-        <span className="text-sm font-medium text-[var(--foreground)] leading-tight">
-          {student.name}
-        </span>
-      </div>
-      <p className="text-[10px] font-mono text-[var(--muted-foreground)] pl-9">
-        {student.roll_no}
-      </p>
-      <RotationStrip
-        rotations={student.rotations}
-        currentUnit={currentUnit}
-        currentRotation={currentRotation}
-      />
-    </li>
+    <tr className="hover:bg-[var(--muted)]/40 transition-colors">
+      <td className="border border-[var(--border)] px-3 py-2.5 text-center font-semibold tabular-nums text-[var(--muted-foreground)]">
+        {srNo}
+      </td>
+      {rows.map((s, i) => (
+        <RotationCells key={i} student={s} />
+      ))}
+    </tr>
   );
 }
 
-/**
- * Tiny strip showing the student's full 4-rotation lineup. The rotation
- * cell that lands them in the unit currently being viewed gets the
- * unit-category color treatment; the others are muted. Helps the reader
- * see context at a glance without having to look the student up elsewhere.
- */
-function RotationStrip({
-  rotations,
-  currentUnit,
-  currentRotation,
-}: {
-  rotations: Record<number, string>;
-  currentUnit: string;
-  currentRotation: number;
-}) {
+function RotationCells({ student }: { student: UnitStudent | undefined }) {
+  if (!student) {
+    return (
+      <>
+        <td className="border border-[var(--border)] px-3 py-2.5" />
+        <td className="border border-[var(--border)] px-3 py-2.5" />
+      </>
+    );
+  }
   return (
-    <div className="pl-9 flex gap-1">
-      {[1, 2, 3, 4].map((rot) => {
-        const dept = rotations[rot];
-        const isCurrent = rot === currentRotation;
-        const matchesUnit = dept === currentUnit;
-        return (
-          <div
-            key={rot}
-            className={`flex-1 min-w-0 rounded px-1.5 py-1 text-[9px] leading-tight ${
-              isCurrent
-                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                : matchesUnit
-                  ? "bg-blue-50 text-blue-700"
-                  : "bg-[var(--muted)] text-[var(--muted-foreground)]"
-            }`}
-            title={dept ? `R${rot}: ${dept}` : `R${rot}: —`}
-          >
-            <p className="font-bold opacity-90">R{rot}</p>
-            <p className="truncate font-medium" title={dept ?? ""}>
-              {dept ?? "—"}
-            </p>
-          </div>
-        );
-      })}
-    </div>
+    <>
+      <td className="border border-[var(--border)] px-3 py-2.5 text-center font-semibold tabular-nums text-[var(--foreground)]">
+        {student.rank ?? "—"}
+      </td>
+      <td className="border border-[var(--border)] px-3 py-2.5 text-[var(--foreground)] whitespace-nowrap">
+        {student.name}
+      </td>
+    </>
   );
 }
