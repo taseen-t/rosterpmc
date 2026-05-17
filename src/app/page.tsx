@@ -1,6 +1,8 @@
 import { getStudentsWithOverrides, getDepartmentsWithOverrides } from "@/lib/data";
-import { getAllSelections, getSeatMatrix } from "@/lib/selections";
+import { getAllSelections, getSeatMatrix, getSubmittedSet } from "@/lib/selections";
 import { classify, categoryStyle } from "@/lib/categories";
+import { buildUnitBreakdown } from "@/lib/units";
+import { UnitBreakdown } from "@/components/UnitBreakdown";
 
 // ISR: revalidate the homepage at most every 15 seconds. Admin edits call
 // revalidatePath('/'), so changes show up immediately; CDN serves during
@@ -8,12 +10,22 @@ import { classify, categoryStyle } from "@/lib/categories";
 export const revalidate = 15;
 
 export default async function HomePage() {
-  const [students, departments, selections, matrix] = await Promise.all([
+  const [students, departments, selections, matrix, submittedSet] = await Promise.all([
     getStudentsWithOverrides(),
     getDepartmentsWithOverrides(),
     getAllSelections(),
     getSeatMatrix(),
+    getSubmittedSet(),
   ]);
+
+  // Per-department breakdown of finalized students. Derived from the data
+  // we already fetched — purely a render-time mapping, no extra DB hit.
+  const unitBreakdown = buildUnitBreakdown(
+    departments,
+    students,
+    selections,
+    submittedSet,
+  );
 
   const selByRoll = new Map<string, Map<number, string>>();
   for (const s of selections) {
@@ -335,6 +347,18 @@ export default async function HomePage() {
           <p className="mt-6 text-sm text-[var(--muted-foreground)] max-w-2xl">
             Need a correction? Contact your roster administrator directly.
           </p>
+        </div>
+      </section>
+
+      {/* ─── By unit ───────────────────────────────────────────── */}
+      <section id="by-unit" className="mx-auto max-w-7xl px-4 md:px-6 py-20 md:py-24">
+        <SectionHeader
+          eyebrow="By unit"
+          title="Who's where"
+          subtitle="Every department, broken down by rotation. Click a unit to expand and see the finalized House Officers placed there across all four three-month rotations."
+        />
+        <div className="mt-10">
+          <UnitBreakdown units={unitBreakdown} />
         </div>
       </section>
     </>

@@ -17,6 +17,8 @@ import { StudentEditor } from "./StudentEditor";
 import { AdminLogoutButton } from "./AdminLogoutButton";
 import { AddStudentForm } from "./AddStudentForm";
 import type { DepartmentLoad } from "./RotationEditor";
+import { buildUnitBreakdown } from "@/lib/units";
+import { UnitBreakdown } from "@/components/UnitBreakdown";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +48,15 @@ export default async function AdminPage() {
       filled: [1, 2, 3, 4].map((r) => counts.get(r) ?? 0),
     };
   });
+
+  // Per-department breakdown of finalized students for the read-only
+  // "by unit" view. Pure derive — no extra DB hit.
+  const unitBreakdown = buildUnitBreakdown(
+    departments,
+    students,
+    selections,
+    submittedSet,
+  );
 
   const passes = students.filter((s) => s.overall === "Pass").length;
   const fails = students.length - passes;
@@ -153,6 +164,17 @@ export default async function AdminPage() {
             ]),
           )}
         />
+      </section>
+
+      <section>
+        <SectionHeader
+          eyebrow="By unit"
+          title="Finalized placements per unit"
+          subtitle="Every department, broken down by rotation. Read-only mirror of the public view — useful for cross-checking placements unit by unit."
+        />
+        <div className="mt-8">
+          <UnitBreakdown units={unitBreakdown} />
+        </div>
       </section>
     </div>
   );
